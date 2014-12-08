@@ -1,0 +1,34 @@
+http://www.fer.unizg.hr/_download/repository/primjer_RU_sustava.pdf
+
+Tekstura: 
+
+R. M. Haralick, K. Shanmugam, and I. Dinstein, “Textural fea-
+tures for image classification,” IEEE Trans. on Systems, Man, and
+Cybernetics, vol. 3, no. 6, pp. 610–621, 1973.
+(http://www.inf.ethz.ch/personal/markusp/teaching/18-799B-CMU-spring05/material/eizan-tad.pdf)
+ = Horalick's texture features
+
+Wang, X., Han, X., Yan, S.: An hog-lbp human detector with partial occlusion
+handling. In: ICCV. (2009)
+  = netko vec ima lbp kao temu projekta
+
+Boja:
+
+P. Ott and M. Everingham, “Implicit color segmentation features
+for pedestrian and object detection,” in IEEE Intl. Conf. Computer
+Vision, 2009. 1
+ = intensity invariant color normalization before feature extraction
+(http://patrick-ott.de/dl/bmvcws09.pdf)
+(http://patrick-ott.de/dl/dc_poster.pdf)
+(http://patrick-ott.de/dl/iccv2009.pdf)
+
+
+Dollár, P., Tu, Z., Perona, P., Belongie, S.: Integral channel features. In: BMVC.
+(2009)
+  = compute features fast on sliding windows, randomly chosen higher order features on multiple color and texture channels
+
+Walk, S., Majer, N., Schindler, K., Schiele, B.: New features and insights for
+pedestrian detection. In: CVPR. (2010)
+(http://www.igp.ethz.ch/photogrammetry/publications/pdf_folder/walk10cvpr.pdf)
+
+
