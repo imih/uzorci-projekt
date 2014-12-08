@@ -1,5 +1,6 @@
 \documentclass[seminar]{fer}
 
+\usepackage[authoryear]{natbib}
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
 \author{Iva Miholić, Kristijan Franković, Dragan Drandić, Gustav Matula, Ivan Katanić}
 
@@ -7,9 +8,25 @@
 \maketitle
 
 \chapter{Detekcija pješaka u urbanim okruženjima}
+\section{Opis zadatka}
+Detekcija pješaka u urbanim okruženjima problem je povezan sa automobilskom industrijom, sigurnošću u prometu, sigurnosnim nadziranjem i robotikom. Rješava se kao detekcija objekta u okviru područja računalnog vida.
+
+Pregled najznačajnijih rješenja ovog problema dan je u \cite{BenensonOHS14}. U ovom će radu biti riječi o detektorima temeljenih na pretraživanju graničnih prozora.  
+%TODO opis poznatih metoda
 
 \chapter{Baza podataka za treniranje i verifikaciju rješenja}
 
+Za treniranje i verifikaciju rješenja koristit ćemo skup podataka INRIA \cite{DT05}. To je skup fotografija urbanog okruženja u boji i pripadnih anotacija. Za svaku fotografiju zabilježen je skup graničnih prozora \engl{bounding window} unutar kojih se nalaze prikazi uspravnih osoba. %TODO primjer oznacene slike i kako se definira bounding window
+
+INRIA se do sada često koristio za trening detektora zbog raznolikosti pozadinskih okruženja osoba na slikama i točnosti anotacija \cite{BenensonOHS14}. Za razliku od ostalih javno dostupnih baza podataka za detekciju pješaka, ove fotografije nisu dobivene iz videa te su relativno visoke kvalitete i fotografirane su iz različitih točaka gledišta. U drugim bazama podataka, pješaci su većinom konecentrirani u centralnoj horizontali fotografije jer je ista dobivena iz vozačeve perspektive.
+
+Baza se sastoji od podskupa za trening i podskupa za evaluaciju. U podskupu za trening označena su $1208$ pješaka u $614$ od $1832$ fotografije. U podskupu za testiranje označeno je $566$ pješaka u $453$ od $741$ fotografije \cite{Dollar:2012:PDE:2197081.2197275}
+
 \chapter{Idejno rješenje i prikaz arhitekture sustava računalnog vida}
 
+\section{Pregled značajki temeljenih na teksturi i boji}
+
+\section{Plan arhitekture sustava računalnog vida}
+\bibliographystyle{plain}
+\bibliography{bibliografija}
 \end{document}

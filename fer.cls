@@ -92,9 +92,9 @@
 \if@fontlmodern\RequirePackage{lmodern} \fi
 
 % Postavljanje stila citiranja
-\if@citeauthoryear \RequirePackage[authoryear, round]{natbib}
-\else \RequirePackage[numbers, square]{natbib}
-\fi
+%\if@citeauthoryear \RequirePackage[authoryear, round]{natbib}
+%\else \RequirePackage[numbers, square]{natbib}
+%\fi
 
 % Umjesto poziva \RequirePackage[outsidefoot]{pageno}.
 % Neke LaTeX distribucije odbijaju automatski instalirati pageno paket.
