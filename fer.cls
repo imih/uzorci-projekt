@@ -247,16 +247,6 @@
 }
 }
 
-\if@radseminar%
-  \def\voditelj#1{\gdef\@voditelj{#1}}
-  \def\@voditelj{\@latex@warning@no@line{Voditelj nije naveden.
-  Koristi \noexpand\voditelj za definiranje}}
-\else%
-  \def\thesisnumber#1{\gdef\@thesisnumber{#1}}
-  \def\@thesisnumber{\@latex@warning@no@line{Broj rada nije definiran.
-  Koristi \noexpand\thesisnumber za definiranje}}
-\fi
-
 \if@titlepage
 	\renewcommand\maketitle{%
 	\begin{titlepage}%
@@ -270,12 +260,10 @@
 		\end{center}
 		\vfill
 		\begin{center}%
-	    	\if@radzavrsni%
-			  {\large\sffamily ZAVR\v{S}NI RAD br.~\@thesisnumber \par}%
-			\else \if@raddiplomski%
+	    	 \if@raddiplomski%
 			  {\large\sffamily DIPLOMSKI RAD br.~\@thesisnumber \par}%
-			\else {\large\sffamily\bfseries SEMINAR \par}%
-			\fi\fi
+			\else {\large\sffamily\bfseries PROJEKT IZ RASPOZNAVANJA UZORAKA \\ kontrolna točka\par}%
+			\fi
 			\if@radseminar \vskip 3em%
 			\else \vskip 1em%
 			\fi
@@ -283,12 +271,7 @@
 			\vskip 1em%
 			{\large\sffamily\lineskip .75em%
 			\begin{tabular}[t]{c}%
-	        	\if@radseminar%
-	        	  {\itshape \@author} \\
-	        	  Voditelj: {\itshape \@voditelj}
-	        	\else
 				    \@author
-				\fi
 			\end{tabular}\par}%
 		\end{center}\par
 		\vfill
