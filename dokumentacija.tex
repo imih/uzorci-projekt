@@ -2,17 +2,28 @@
 
 \usepackage[authoryear]{natbib}
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
-\author{Iva Miholić, Kristijan Franković, Dragan Drandić, Gustav Matula, Ivan Katanić}
+\author{Iva Miholić, Gustav Matula, Kristijan Franković, Tomislav Kiš}
 
 \begin{document}
 \maketitle
 
 \chapter{Detekcija pješaka u urbanim okruženjima}
-\section{Opis zadatka}
-Detekcija pješaka u urbanim okruženjima problem je povezan sa automobilskom industrijom, sigurnošću u prometu, sigurnosnim nadziranjem i robotikom. Rješava se kao detekcija objekta u okviru područja računalnog vida.
+\section{Opis zadatka i postojećih rješenja}
+Detekcija pješaka u urbanim okruženjima problem je povezan sa automobilskom industrijom, sigurnošću u prometu, sigurnosnim nadziranjem i robotikom. Rješava se kao detekcija objekta u okviru područja računalnog vida. Ovaj projektni zadatak obuhvaća izgradnju detektora pješaka na fotografijama iz urbanih okruženja korištenjem značajki temeljenih na teksturi i boji.
 
-Pregled najznačajnijih rješenja ovog problema dan je u \cite{BenensonOHS14}. U ovom će radu biti riječi o detektorima temeljenih na pretraživanju graničnih prozora.  
-%TODO opis poznatih metoda
+Pregled najznačajnijih rješenja ovog problema dan je u \cite{BenensonOHS14}. Prvi značajniji napredak u detekciji pješaka bila je primjena \emph{VJ} detektora objekata \cite{VJ} na ovaj problem. Detektori temeljeni na histogramu usmjerenih gradijenata \engl{Histogram of Oriented Gradients, HOG} \cite{HOG}  uz linearni ili nelinearni skup potpornih vektora, postigli su značajne rezultate, posebice u kombinaciji sa drugim značajkama temeljenih na svojstvima boje, tekstura i oblika. Više o HOG pristupu bit će riječi u sljedećim poglavljima jer ćemo ga koristiti kao kostur našeg prostora značajki.
+
+Od ostalih rezultata, potrebno je izdvojiti postupke temeljene na modelu rastavljivih dijelova  \engl{Deformable Part Models, DPM} u kojem se detekcija dijelova tijela sažima u detekciju cijelog pješaka te nelinearne postupke učenja temeljenih na neuronskim mrežama i stabalima odluke \cite{BenensonOHS14}. Takvi složeniji postupci uspoređeni su sa linearnim SVM-om uz HOG i druge značajke nisu dali značajno bolji rezultat upućujući na korektnost naše odluke o arhitekturi detektora.
+
+Pristup na koji ćemo se fokusirati koristi metodu skalabilnog kliznog prozora. Unutar prozora na fotografiji određuju se značajke te se skup piksela unutar prozora binarno klasificira kao fotografija pješaka. Prozor zatim "putuje" po fotografiji testirajući druge skupove piksela te se može dodatno skalirati nakon čega se ponavlja isti postupak. Primjer klasificirane fotografije ovakvim postupkom vidljiv je na slici \ref{primjer_klasifikacije}. Problem takvog pristupa je ignoriranje konteksta oko okvira koji se promatra što se uspješno rješava uvođenjem novih značajki, odnosno novih informacija o prozoru u sustav.
+\begin{figure}
+\center
+\includegraphics[scale=0.7]{img/crossing.png}
+\caption{Fotografija koja je klasificirana detektorom pješaka metodom kliznog prozora. Žuti okviri prikazuju okvire onih prozora koji su klasificirani kao prikaz pješaka.}
+\label{primjer_klasifikacije}
+\end{figure}
+
+Dodavanje novih značajki pokazao se kao vrlo uspješan način poboljšanja rada detektora pješaka, no proširenje prostora značajki može biti problematično za klasične algoritme učenja što se rješava redukcijom prostora značajki metodom Fisherove diskriminantne analize ili postupkom parcijalnih najmanjih kvadrata \engl{Partial Least Squares, PLS} \cite{Schwartz_humandetection}.
 
 \chapter{Baza podataka za treniranje i verifikaciju rješenja}
 
