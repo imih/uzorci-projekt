@@ -44,7 +44,7 @@ korisne izvore informacija, što vodi lažnoj pozitivnoj klasifikaciji.
 Primjerice tekstura nam dosta pomaže kod prepoznavanja odjeće, ali i pozadine, a boja kod prepoznavanja boje kože.
 
 
-Pretpostavljamo (slično kao u [?]) da je detekcijski prozor podijeljen na preklapajuće blokove u iz kojih se zatim ekstrahiraju značajke.
+Pretpostavljamo (slično kao u \cite{Schwartz}) da je detekcijski prozor podijeljen na preklapajuće blokove u iz kojih se zatim ekstrahiraju značajke.
 
 \subsection{Značajke temeljene na teksturi}
 
@@ -71,7 +71,7 @@ primjeri značajki koje Haralick navodi u svome radu su primjerice:
 \subsection{Značajke temeljene na boji}
 
 
-U [?] se za iskorištavanje informacije sadržane u boji koristi jednostavno proširenje HOG histograma. Za početak, HOG histogram se gradi tako da se za
+U \cite{Schwartz} se za iskorištavanje informacije sadržane u boji koristi jednostavno proširenje HOG histograma. Za početak, HOG histogram se gradi tako da se za
 svaki piksel uzima gradijent po boji s najvećom normom, dakle promatramo koja boja se najviše mijenja. Zatim se formira trostupčani histogram frekvencija svake od tri boje za trenutni prozor detekcije. Tako uz histogram gradijenata promatramo i histogram boja.
 
 
@@ -81,7 +81,7 @@ svaki piksel uzima gradijent po boji s najvećom normom, dakle promatramo koja b
 Velika dimenzija prostora značajki koju dobivamo promatrajući, uz gradijente, teksturu i boju, predstavlja problem za klasične metode strojnog učenja
 za treniranje klasifikatore. Zbog podjele prozora detekcije u blokove, značajke se ekstrahiraju iz susjednih blokova, što neizbježno vodi do
 sličnih značajki bliskih blokova i samim time do kolinearnosti. Zbog toga ima smisla iskoristiti nekakvu tehniku redukcije dimenzije, kao što su
-PCA (\emph{Principal Component Analysis}) ili FDA (\emph{Fisher Discriminant Analysis}). [?] koristi PLS (\emph{Partial Least Squares}), inače 
+PCA (\emph{Principal Component Analysis}) ili FDA (\emph{Fisher Discriminant Analysis}). \cite{Schwartz} koristi PLS (\emph{Partial Least Squares}), inače 
 regresijsku metodu, praktičnu i za redukciju dimenzije skupa značajki. 
 
 Nakon redukcije dimenzije za treniranje klasifikatora možemo koristiti metode tipa SVM (\emph{Support Vector Machine}), koje bi na prostoru s 
