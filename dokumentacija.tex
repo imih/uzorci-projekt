@@ -3,6 +3,7 @@
 \usepackage[authoryear]{natbib}
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
 \author{Iva Miholić, Gustav Matula, Kristijan Franković, Tomislav Kiš}
+\makeindex
 
 \begin{document}
 \maketitle
@@ -31,8 +32,29 @@ Do sada su najviše korištene značajke temeljene na informaciji o bridovima, b
 Za treniranje i verifikaciju rješenja koristit ćemo skup podataka INRIA \cite{DT05}. To je skup fotografija urbanog okruženja u boji i pripadnih anotacija. Za svaku fotografiju zabilježen je skup graničnih prozora \engl{bounding window} unutar kojih se nalaze prikazi uspravnih osoba.
 
 INRIA se do sada često koristio za trening detektora zbog raznolikosti pozadinskih okruženja osoba na slikama i točnosti anotacija \cite{BenensonOHS14}. Za razliku od ostalih javno dostupnih baza podataka za detekciju pješaka, ove fotografije nisu dobivene iz videa te su relativno visoke kvalitete i fotografirane su iz različitih točaka gledišta. U drugim bazama podataka, pješaci su većinom konecentrirani u centralnoj horizontali fotografije jer je ista dobivena iz vozačeve perspektive.
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=1.7]{img/person_139.png}
+\includegraphics[scale=0.5]{img/neg.png}
+\caption{Primjeri fotografija iz baze podataka INRIA.}
+\label{inria1}
+\end{figure}
 
-Baza se sastoji od podskupa za trening i podskupa za evaluaciju. U podskupu za trening označena su $1208$ pješaka u $614$ od $1832$ fotografije. U podskupu za testiranje označeno je $566$ pješaka u $453$ od $741$ fotografije \cite{Dollar:2012:PDE:2197081.2197275}
+Baza slika INRIA sadrži slike iz nekoliko različitih izvora:
+\begin{itemize}
+\item \emph{Graz 01} skup podataka sa pridodanim bilješkama
+\item slike iz osobne kolekcije samog autora koje su zbog svoje veličine u originalu izrezane tako da prikazuju samo osobu
+\item slike sa servisa Google Images
+\end{itemize}.
+
+Sama se baza sastoji od podskupa podataka za trening i podskupa za evaluaciju. U podskupu za trening označena su $1208$ pješaka u $614$ od $1832$ fotografije. U podskupu za testiranje označeno je $566$ pješaka u $453$ od $741$ fotografije \cite{Dollar:2012:PDE:2197081.2197275}.  Primjeri fotografija sa i bez pješaka dani su na slici \ref{inria1}. Primjer anotacije za lijevu fotografiju sa slike \ref{inria1} dan je na slici \ref{inria2}.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.3]{img/annot_139.png}
+\caption{Primjer anotacije pozitivno klasificiranih kliznih prozora za lijevu fotografiju na slici \ref{inria1}.}
+\label{inria2}
+\end{figure}
 
 \chapter{Idejno rješenje i prikaz arhitekture sustava računalnog vida}
 
