@@ -90,6 +90,31 @@ previše dimenzija bile neupotrebljive.
 
 \section{Plan arhitekture sustava računalnog vida}
 
+Sustav će se kao i obično sastojati od dvije osnovne komponente: treniranja i primjene.
+
+\subsection{Treniranje klasifikatora}
+
+\begin{figure}[h!]
+\center
+\includegraphics[scale=0.7]{img/treniranje.png}
+\caption{Dijagram treniranja SVM klasifikatora}
+\label{primjer_klasifikacije}
+\end{figure}
+
+Treniranje se sastoji od nekoliko koraka koji su okvirno prikazani na slici.1. 
+Za svaku sliku iz baze računaju se gradijenti (horizontalni i vertikalni smjer). Zatim po slici pomičemo
+klizni prozor, dijelimo ga na preklapajuće blokove i za svaki blok računamo histogram gradijenata i histogram boja. Prozor potom ponovno dijelimo
+na blokove (ne nužno istih dimenzija kao u prethodnom koraku), te računamo \emph{co-occurrence} matricu, iz koje dobivamo značajke koje opisuju
+teksturu. U sljedećem koraku reduciramo dimenziju prostora značajki. Konačno, na tako pojednostavljenim primjerima treniramo SVM.
+
+
+\subsection{Primjena klasifikatora}
+
+
+Slično kao kod treniranja promatramo klizni prozor i za njega računamo značajke, kojima zatim reduciramo dimenziju te ih dajemo kao input
+klasifikatoru. U koliko klasifikator procijeni da se radi o pješaku, dojavljujemo poziciju trenutnog kliznog prozora
+
+
 
 \bibliographystyle{plain}
 \bibliography{bibliografija}
