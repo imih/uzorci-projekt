@@ -5,8 +5,11 @@
 \usepackage[croatian]{babel}
 \usepackage{subfigure}
 
+\setbeamertemplate{footline}[frame number]
+
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
 \author{Iva Miholić, Gustav Matula, Kristijan Franković, Tomislav Kiš}
+\makeindex
 
 \begin{document}
 \begin{frame}
@@ -14,21 +17,28 @@
 \end{frame}
 
 \begin{frame}
+\frametitle{Sadržaj prezentacije}
+\tableofcontents
+\end{frame}
+
+\section{Detekcija pješaka u urbanim okruženjima}
+\subsection{Opis zadatka}
+\begin{frame}
 \frametitle{Detekcija pješaka u urbanim okruženjima}
-\framesubtitle{Opis zadatka i postojećih rješenja}
 \begin{itemize}
 \item detekcija objekta u okviru područja računalnog vida
 \item detektor pješaka na fotografijama iz urbanih okruženja korištenjem značajki temeljenih na teksturi i boji
 \end{itemize}
 \end{frame}
 
+\subsection{Osnovni pregled postojećih rješenja}
 \begin{frame}
 \begin{itemize}
 \frametitle{Osnovni pregled postojećih rješenja}
-\item primjena \emph{VJ} detektora objekata
-\item detektori temeljeni na histogramu usmjerenih gradijenata \emph{Histogram of Oriented Gradients, HOG}
+\item primjena \emph{VJ} detektora objekata \cite{VJ}
+\item detektori temeljeni na histogramu usmjerenih gradijenata \emph{Histogram of Oriented Gradients, HOG} \cite{HOG}
 \item HOG uz linearni SVM u kombinaciji sa drugim značajkama temeljenih na svojstvima boje, tekstura, oblika, granica, gradijenata
-\item složeniji postupci učenja ne daju znatno bolje rezultate
+\item složeniji postupci učenja ne daju znatno bolje rezultate \cite{BenensonOHS14}
 \end{itemize}
 \end{frame}
 
@@ -46,21 +56,9 @@
 \end{itemize}
 \end{frame}
 
+\section{Baza podataka za treniranje i verifikaciju rješenja }
 \begin{frame}
-\frametitle{Prostor značajki}
-\begin{itemize}
-\item najviše korištene značajke temeljene na informaciji o bridovima, boji, teksturi lokalnim oblicima te svojstvima gradijenta i kovarijance
-\item proširenje prostora značajki može biti problematično za klasične algoritme učenja 
-\item redukcija prostora značajki metodom Fisherove diskriminantne analize ili postupkom parcijalnih najmanjih kvadrata \emph{Partial Least Squares, PLS}
-\end{itemize}
-\end{frame}
-
-\begin{frame}
-\frametitle{Pregled značajki temeljenih na teksturi i boji}
-\end{frame}
-
-\begin{frame}
-\frametitle{Baza podataka za treniranje i verifikaciju rješenja \\ INRIA}
+\frametitle{Baza podataka za treniranje i verifikaciju rješenja \\ INRIA \cite{Dollar:2012:PDE:2197081.2197275}}
 
 \begin{figure}
 \includegraphics{img/person_139.png}
@@ -71,9 +69,74 @@
 \end{figure}
 \end{frame}
 
+\section{Pregled značajki temeljenih na teksturi i boji}
 \begin{frame}
-\frametitle{Prikaz plana arhitekture sustava računalnog vida}
-%TODO dodati sliku
+\frametitle{Pregled značajki temeljenih na teksturi i boji}
+\begin{itemize}
+\item nadopuna značajkama fokusiranim na bridove (HOG) \cite{HOG}
+\item detekcijski prozor podijeljen na preklapajuće blokove u iz kojih se ekstrahiraju značajke
+\end{itemize}
 \end{frame}
 
+\subsection{Značajke temeljene na teksturi}
+\begin{frame}
+\frametitle{Značajke temeljene na teksturi}
+\begin{itemize}
+\item Haralickov rad \cite{Haralick} -- \emph{co-occurrence} matrica
+\item određivanje vjerojatnosti susjedstva svih parova intenziteta
+\item primjeri Haralickovih značajki 
+\begin{itemize}
+\item Varijanca: $$\sum_{i}\sum_{j}(i - \mu)^2p(i, j)$$
+\item Korelacija: $$\frac{\sum_{i}\sum_{j}(ij)p(i,j) - \mu_{x}\mu_{y}}{\sigma_{x}\sigma_{y}}$$
+\item Entropija: $$-\sum_{i}\sum_{j}p(i, j)\log(p(i, j))$$
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\subsection{Značajke temeljene na boji}
+\begin{frame}
+\frametitle{Značajke temeljene na boji}
+\begin{itemize}
+\item u \cite{Schwartz} jednostavno proširenje HOG histograma
+\item promatramo koja boja se najviše mijenja
+\item histogram gradijenata promatramo i histogram boja
+\end{itemize}
+\end{frame}
+
+\subsection{Redukcija dimenzije prostora značajki}
+\begin{frame}
+\frametitle{Redukcija dimenzije prostora značajki}
+\begin{itemize}
+\item značajke bliskih blokova su slične -- problem kolinearnosti
+\item velika dimenzionalnost problem za klasične metode učenja (SVM)
+\item tehnike redukcije dimenzije
+\begin{itemize}
+\item PCA (\emph{Principal Component Analysis}) 
+\item FDA (\emph{Fisher Discriminant Analysis})
+\item PLS (\emph{Partial Least Squares})
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{Plan arhitekture sustava računalnog vida}
+\begin{frame}
+\frametitle{Plan arhitekture sustava računalnog vida}
+\begin{enumerate}
+\item Treniranje klasifikatora
+\begin{figure}[h!]
+\center
+\includegraphics[scale=0.5]{img/treniranje.png}
+\caption{Dijagram treniranja SVM klasifikatora}
+\label{treniranje}
+\end{figure}
+\item Testiranje klasifikatora
+\item Primjena klasifikatora
+\end{enumerate}
+\end{frame}
+
+\begin{frame}
+\small
+\bibliographystyle{ieeetr}
+\bibliography{bibliografija}
+\end{frame}
 \end{document}
