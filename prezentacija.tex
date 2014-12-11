@@ -3,6 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[croatian]{babel}
+\usepackage{subfigure}
 
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
 \author{Iva Miholić, Gustav Matula, Kristijan Franković, Tomislav Kiš}
@@ -17,30 +18,32 @@
 \framesubtitle{Opis zadatka i postojećih rješenja}
 \begin{itemize}
 \item detekcija objekta u okviru područja računalnog vida
-\item detektor pješaka na fotografijama iz urbanih okruženja korištenjem značajki temeljenih na teksturi i boji.
+\item detektor pješaka na fotografijama iz urbanih okruženja korištenjem značajki temeljenih na teksturi i boji
 \end{itemize}
 \end{frame}
 
 \begin{frame}
 \begin{itemize}
+\frametitle{Osnovni pregled postojećih rješenja}
 \item primjena \emph{VJ} detektora objekata
 \item detektori temeljeni na histogramu usmjerenih gradijenata \emph{Histogram of Oriented Gradients, HOG}
-\item HOG uz linearni SVM u kombinaciji sa drugim značajkama temeljenih na svojstvima boje, tekstura i oblika
-\item složeniji postupci ne daju bolje rezultate
+\item HOG uz linearni SVM u kombinaciji sa drugim značajkama temeljenih na svojstvima boje, tekstura, oblika, granica, gradijenata
+\item složeniji postupci učenja ne daju znatno bolje rezultate
 \end{itemize}
 \end{frame}
 
 \begin{frame}
-\begin{itemize}
-\item metoda skalabilnog kliznog prozora
-\item ignoriranje konteksta oko okvira koji se promatra 
-\end{itemize}
+\frametitle{Metoda skalabilnog kliznog prozora}
+
 \begin{figure}
 \center
 \includegraphics[scale=0.7]{img/crossing.png}
 \caption{Fotografija koja je klasificirana detektorom pješaka metodom kliznog prozora. Žuti okviri prikazuju okvire onih prozora koji su klasificirani kao prikaz pješaka.}
 \label{primjer_klasifikacije}
 \end{figure}
+\begin{itemize}
+\item ignoriranje konteksta oko okvira koji se promatra 
+\end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -53,7 +56,15 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Baza podataka za treniranje i verifikaciju rješenja}
+\frametitle{Baza podataka za treniranje i verifikaciju rješenja \\ INRIA}
+
+\begin{figure}
+\includegraphics{img/person_139.png}
+\includegraphics[scale=0.3]{img/neg.png}
+\end{figure}
+\begin{figure}
+\includegraphics[scale=0.3]{img/annot_139.png}
+\end{figure}
 \end{frame}
 
 \begin{frame}
