@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project(PR_PROJECT)
+find_package(OpenCV REQUIRED)
+add_executable(TextFeatures TextFeatures.cpp TextBlock.cpp)
+target_link_libraries(TextFeatures ${OpenCV_LIBS})
