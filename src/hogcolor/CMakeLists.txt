@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project(PR_PROJECT)
+find_package(OpenCV REQUIRED)
+add_executable(HOGAndColorFeatures HOGAndColorFeatures.cpp)
+target_link_libraries(HOGAndColorFeatures ${OpenCV_LIBS})
