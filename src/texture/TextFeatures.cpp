@@ -63,8 +63,8 @@ namespace texture {
 
     vector<TextBlock> texBlocks;
     // co-occ matrix for channel k on distance d of orientation p
-    for(int i = 0; i < image.cols; i += (kTexBlockSize / 2) + 1)  {
-      for(int j = 0; j < image.rows; j += (kTexBlockSize / 2) + 1) {
+    for(int i = 0; i < image.rows; i += (kTexBlockSize / 2) + 1)  {
+      for(int j = 0; j < image.cols; j += (kTexBlockSize / 2) + 1) {
         TextBlock t(p);
         for(int k = 0; k < image.channels(); ++k) {
           Mat blockIm = Mat(m[k], Rect(i, j,
@@ -79,6 +79,8 @@ namespace texture {
   }
 };
 
+
+using namespace texture;
 int main(int argc, char** argv) {
   if(argc != 2) {
     puts("Fali slika!\n");
@@ -86,8 +88,15 @@ int main(int argc, char** argv) {
   }
 
   puts("Texture features extraction\n");
-  for(int p = 0; p < 4; ++p) // co-occ type
-    texture::getTextBlocks(argv[1], p);
+  vector<double> tex_features;
+  for(int p = 0; p < 4; ++p) { // co-occ type 
+    vector<TextBlock> t = getTextBlocks(argv[1], p);
+    for(int i = 0; i < t.size(); ++i) {
+      vector<double> f = t[i].getFeatures();
+      tex_features.insert(tex_features.end(), f.begin(), f.end());
+    }
+  }
+  printf("Dodano %d text znacajki\n", (int) tex_features.size());
   puts("Done\n");
 
   return 0;
