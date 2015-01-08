@@ -49,11 +49,13 @@ namespace texture {
     TRACE(type2str(image.type()));
     cv::cvtColor(image, image, CV_BGR2HSV); //convertinje u hsv
     Mat m[3];
+    puts("spliting the channels\n");
     cv::split(image, m); // split image channels to 3 matrices m[0], m[1], m[2]
 
     //16 bin color bounds values 1....16
-    for(int i = 0; i < image.cols; ++i)
-      for(int j = 0; j < image.rows; ++j) {
+    puts("normalizing the colors for texture\n");
+    for(int i = 0; i < m[0].rows; ++i)
+      for(int j = 0; j < m[0].cols; ++j) {
         for(int k = 0; k < image.channels(); ++k) {
           double val = (double) m[k].at<unsigned char>(i, j);
           m[k].at<unsigned char>(i, j) = (unsigned char) min(
@@ -61,15 +63,16 @@ namespace texture {
         }
       }
 
+    puts("per block features calc\n");
     vector<TextBlock> texBlocks;
     // co-occ matrix for channel k on distance d of orientation p
-    for(int i = 0; i < image.rows; i += (kTexBlockSize / 2) + 1)  {
-      for(int j = 0; j < image.cols; j += (kTexBlockSize / 2) + 1) {
+    for(int i = 0; i < m[0].cols; i += (kTexBlockSize / 2) + 1)  {
+      for(int j = 0; j < m[0].rows; j += (kTexBlockSize / 2) + 1) {
         TextBlock t(p);
         for(int k = 0; k < image.channels(); ++k) {
-          Mat blockIm = Mat(m[k], Rect(i, j,
-                min(kTexBlockSize, image.cols - i), 
-                min(kTexBlockSize, image.rows - j)));
+          int len1 = min(kTexBlockSize, (int) m[k].cols - i);
+          int len2 = min(kTexBlockSize, (int) m[k].rows - j);
+          Mat blockIm(m[k], Rect(i, j, len1, len2));
           t.addChannel(k, blockIm);
         }
         texBlocks.push_back(t);
@@ -78,7 +81,6 @@ namespace texture {
     return texBlocks;
   }
 };
-
 
 using namespace texture;
 int main(int argc, char** argv) {
@@ -91,7 +93,7 @@ int main(int argc, char** argv) {
   vector<double> tex_features;
   for(int p = 0; p < 4; ++p) { // co-occ type 
     vector<TextBlock> t = getTextBlocks(argv[1], p);
-    for(int i = 0; i < t.size(); ++i) {
+    for(int i = 0; i < (int) t.size(); ++i) {
       vector<double> f = t[i].getFeatures();
       tex_features.insert(tex_features.end(), f.begin(), f.end());
     }

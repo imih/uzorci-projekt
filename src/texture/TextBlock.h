@@ -16,10 +16,10 @@ namespace texture {
     // for one co-occ type
     TextBlock(int);
     std::vector<double> getFeatures();
-    void addChannel(int, cv::Mat&);
+    void addChannel(int, cv::Mat);
 
     private:
-    Haralick calcHaralick(cv::Mat&, int) const;
+    Haralick calcHaralick(cv::Mat, int) const;
     void createFeatures(); 
     
     std::vector<double> f; //Haralick features
@@ -28,7 +28,7 @@ namespace texture {
   };
 
   struct Haralick {
-    Haralick(cv::Mat&);
+    Haralick(cv::Mat);
     std::vector<double> getFeatures();
 
     private:

@@ -1,4 +1,8 @@
 #include "TextBlock.h"
+#include <iostream>
+#include <cassert>
+
+#define TRACE(x) std::cout << #x << " = " << x << std::endl
 
 namespace texture {
   using namespace cv;
@@ -23,7 +27,7 @@ namespace texture {
     return f;
   }
 
-  Haralick TextBlock::calcHaralick(cv::Mat& blockIm, int d) const {
+  Haralick TextBlock::calcHaralick(cv::Mat blockIm, int d) const {
     const int dx[] = {0, -1, -1,  1}; //P0, P90, P45, P135
     const int dy[] = {1,  0,  1, -1};
     int p = coOccType;
@@ -32,16 +36,21 @@ namespace texture {
     Mat cooc = Mat::zeros(kColTexBinSize + 1, kColTexBinSize + 1, CV_64F);
     int n = cooc.rows;
     int m = cooc.cols;
-    for(int i = 0; i < n; ++i) {
+
+    int r = blockIm.rows;
+    int c = blockIm.cols;
+    for(int i = 0; i < r; ++i) {
       int x = i + d * dx[p];
-      if(x < 0 || x >= n) 
+      if(x < 0 || x >= r) 
         continue;
-      for(int j = 0; j < m; ++j) {
+      for(int j = 0; j < c; ++j) {
         int y = j + d * dy[p];
-        if(y < 0 || y >= m)
+        if(y < 0 || y >= c)
           continue;
         int val1 = (int) blockIm.at<unsigned char>(i, j);
         int val2 = (int) blockIm.at<unsigned char>(x, y);
+        assert(val1 >= 0 && val1 <= kColTexBinSize);
+        assert(val2 >= 0 && val2 <= kColTexBinSize);
         cooc.at<double>(val1, val2) += 1;
         cooc.at<double>(val2, val1) += 1;
       }
@@ -50,14 +59,15 @@ namespace texture {
     return Haralick(cooc);
   }
 
-  void TextBlock::addChannel(int k, cv::Mat& blockIm) {
+  void TextBlock::addChannel(int k, cv::Mat blockIm) {
     //for channel k make co-occur for every dist d
-    for(int d = 1; d < kColTexBinSize; ++d) {
+    int maxD = min(blockIm.rows, blockIm.cols);
+    for(int d = 1; d <= maxD; ++d) {
       texF.push_back(calcHaralick(blockIm, d));
     }
   }
 
-  Haralick::Haralick(Mat& cooc) {
+  Haralick::Haralick(Mat cooc) {
     //input: Matrix of doubles
     int ng = cooc.rows - 1; // n = ng + 1
     long long  R = 0;
