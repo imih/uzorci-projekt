@@ -9,6 +9,7 @@
 using namespace cv;
 using namespace std;
 
+namespace hog { 
 const int ANGLE_CNT = 2;
 const int ANGLE_BIN_CNT = 9;
 const double PI = 4.0 * atan(1);
@@ -140,9 +141,12 @@ void calc_features(Mat &image, vector< Mat > &feature_vectors) {
     }
   }
 }
+};
 
+
+namespace {
+using namespace hog;
 // main
-
 int main(int argc, char **argv) {
   Mat image;
   image = imread(argv[1], 1);
@@ -168,4 +172,5 @@ int main(int argc, char **argv) {
   }
 
   return 0;
+}
 }

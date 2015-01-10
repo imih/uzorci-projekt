@@ -33,8 +33,8 @@
 class Model : public PLS {
 
 protected:
-	int nfactors;							// number of factors outputed for this model
-	int nfeatures;							// number of features input in this model
+	int nfactors; // number of factors outputed for this model
+	int nfeatures;// number of features input in this model
 
 	// friend classes
 	friend class Storage;
@@ -63,8 +63,5 @@ public:
 	// get number of features
 	int GetNumberFeatures() { return nfeatures; } 
 };
-
-
-
 
 #endif

@@ -12,6 +12,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "TextBlock.h"
+#include "TextFeatures.h"
 
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
@@ -75,31 +76,10 @@ namespace texture {
           Mat blockIm(m[k], Rect(i, j, len1, len2));
           t.addChannel(k, blockIm);
         }
+
         texBlocks.push_back(t);
       }
     }
     return texBlocks;
   }
 };
-
-using namespace texture;
-int main(int argc, char** argv) {
-  if(argc != 2) {
-    puts("Fali slika!\n");
-    exit(1);
-  }
-
-  puts("Texture features extraction\n");
-  vector<double> tex_features;
-  for(int p = 0; p < 4; ++p) { // co-occ type 
-    vector<TextBlock> t = getTextBlocks(argv[1], p);
-    for(int i = 0; i < (int) t.size(); ++i) {
-      vector<double> f = t[i].getFeatures();
-      tex_features.insert(tex_features.end(), f.begin(), f.end());
-    }
-  }
-  printf("Dodano %d text znacajki\n", (int) tex_features.size());
-  puts("Done\n");
-
-  return 0;
-}

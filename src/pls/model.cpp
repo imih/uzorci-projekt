@@ -28,40 +28,27 @@ William R. Schwartz williamrobschwartz [at] gmail.com
 #include "storage.h"
 #include "model.h"
 
-
 Model::Model() {
-
   nfactors = -1;
   nfeatures = -1;
 }
 
-
-
 Model::Model(string filename) {
   Storage storage;
-
   storage.ReadModel(this, filename);
 }
 
-
-
 void Model::SaveModel(string filename) {
   Storage storage;
-
   storage.WriteModel(filename, this);
 }
 
-
-
 Vector<float> *Model::ProjectFeatureVector(Vector<float> *feat) {
   Vector<float> *ret;	
-
   ret = new Vector<float>(this->nfactors);
   Projection(feat->GetData(), ret->GetData(), nfactors);
-
   return ret;
 }
-
 
 
 Matrix<float> *Model::ProjectFeatureMatrix(Matrix<float> *featMat) {
@@ -84,8 +71,6 @@ Matrix<float> *Model::ProjectFeatureMatrix(Matrix<float> *featMat) {
 
   return ret;
 }
-
-
 
 void Model::CreatePLSModel(Matrix<float> *mPos, Matrix<float> *mNeg, int nfactors) {
   Matrix<float> *X;
@@ -113,8 +98,6 @@ void Model::CreatePLSModel(Matrix<float> *mPos, Matrix<float> *mNeg, int nfactor
   delete X;
   delete Y;
 }
-
-
 
 void Model::CreatePLSModel(Matrix<float> *X, Vector<float> *Y, int nfactors) {
   Matrix<float> *Xnew;

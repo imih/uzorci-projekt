@@ -470,7 +470,6 @@ void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDi
     selectedCols.push_back(i);
   }
 
-
   tmpM = T->GetSelectedCols(&selectedCols);
   delete T;
   T = tmpM;
@@ -488,13 +487,11 @@ void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDi
   b = tmpV;
 
 
-
   //T->Write("T.matrix");
   //W->Write("W.matrix");
   //P->Write("P.matrix");
   //b->Write("b.matrix");
   //Yorig->Write("Y.matrix");
-
 
 
   // write T, W, and P
@@ -511,7 +508,6 @@ void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDi
 
   // create auxiliar vector for zscore
   zdataV = new Vector<float>(Wstar->GetNRows());
-
 
   // set max number of factors
   this->maxFactors = this->Wstar->GetNCols();
@@ -530,12 +526,6 @@ void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDi
   delete t;
 }
 
-
-
-
-
-
-
 PLS::PLS() {
 
   Xmean = NULL;
@@ -549,12 +539,6 @@ PLS::PLS() {
   zdataV = NULL;
   maxFactors = -1;
 }
-
-
-
-
-
-
 
 void PLS::SetMatrices(Matrix<float> *W, Matrix<float> *Wstar, Matrix<float> *P, Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *b) {
 
@@ -723,11 +707,6 @@ void PLS::ExecuteZScore(float *feat, float *zscoreResult) {
 
 
 }
-
-
-
-
-
 
 void PLS::InitializePLSModel(Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *Yorig, Vector<float> *b, Matrix<float> *T, Matrix<float> *P,
     Matrix<float> *W, Matrix<float> *Wstar) {
