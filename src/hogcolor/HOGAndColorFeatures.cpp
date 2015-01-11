@@ -9,7 +9,6 @@
 using namespace cv;
 using namespace std;
 
-namespace hog { 
 const int ANGLE_CNT = 2;
 const int ANGLE_BIN_CNT = 9;
 const double PI = 4.0 * atan(1);
@@ -55,8 +54,8 @@ void calc_hog_and_color(Mat *grad, Mat &features) {
       vector< double > square_norms(3);
       
       for (int ch = 0; ch < 3; ++ch) {
-	double dx = planes[ANGLE_0][ch].at< double >(i, j);
-	double dy = planes[ANGLE_90][ch].at< double >(i, j);
+	double dx = planes[ANGLE_0][ch].at< unsigned char >(i, j);
+	double dy = planes[ANGLE_90][ch].at< unsigned char >(i, j);
 	square_norms[ch] = dx * dx + dy * dy;
       }
 
@@ -65,12 +64,14 @@ void calc_hog_and_color(Mat *grad, Mat &features) {
 
       color_hist[best] += 1;
 
-      double dx = planes[ANGLE_0][best].at< double >(i, j);
-      double dy = planes[ANGLE_90][best].at< double > (i, j);
+      double dx = planes[ANGLE_0][best].at< unsigned char >(i, j);
+      double dy = planes[ANGLE_90][best].at< unsigned char > (i, j);
 
       double alpha = atan2(dy, dx);
-      if (alpha < 0.0) alpha += 0.5 * PI;
+      if (alpha < 0.0) alpha += PI;
       if (alpha >= PI) alpha = 0.0;
+
+      alpha *= 180.0 / PI;
 
       int a = floor(alpha) - 1e-6;
       int A = a / (180 / ANGLE_BIN_CNT);
@@ -90,9 +91,6 @@ void calc_hog_and_color(Mat *grad, Mat &features) {
   for (int i = 0; i < ANGLE_BIN_CNT; ++i)
     features.at< float >(0, 3 + i) = angle_hist[i];
 }
-
-
-
 
 // izracunaj feature za sve blokove...
 // jel ok ak su svi kvadratni?
@@ -127,12 +125,12 @@ void calc_features(Mat &image, vector< Mat > &feature_vectors) {
   for (int bl = 0; bl < BLOCK_SIZES_CNT; ++bl) {
     int shift = get_shift_len(__gcd(block_sizes[bl][0], block_sizes[bl][1]));
 
-    for (int i = 0; i + block_sizes[bl][0] <= r; i += shift) {
-      for (int j = 0; j + block_sizes[bl][1] <= c; j += shift) {
+    for (int i = 0; i + block_sizes[bl][1] <= r; i += shift) {
+      for (int j = 0; j + block_sizes[bl][0] <= c; j += shift) {
 	Mat blk_grad[ANGLE_CNT];
 
         for (int a = 0; a < ANGLE_CNT; ++a)
-	  blk_grad[a] = Mat(image, Rect(i, j, block_sizes[bl][0], block_sizes[bl][1]));
+	  blk_grad[a] = Mat(image, Rect(j, i, block_sizes[bl][0], block_sizes[bl][1]));
 
 	Mat feature_vector; 
 	calc_hog_and_color(blk_grad, feature_vector);
@@ -141,11 +139,7 @@ void calc_features(Mat &image, vector< Mat > &feature_vectors) {
     }
   }
 }
-};
 
-
-namespace {
-using namespace hog;
 // main
 int main(int argc, char **argv) {
   Mat image;
@@ -172,5 +166,4 @@ int main(int argc, char **argv) {
   }
 
   return 0;
-}
 }
