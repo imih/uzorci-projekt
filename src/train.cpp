@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <vector>
 
 #include <boost/algorithm/string.hpp> 
@@ -20,6 +21,8 @@ using namespace std;
 #define cast boost::lexical_cast
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
+const int maxlen = 2048;
+
 struct ImNode {
   std::vector<int> Xmin, Ymin, Xmax, Ymax;
   std::vector<int> cX, cY;
@@ -35,31 +38,26 @@ struct ImNode {
 
 };
 
+char temp[maxlen];
 void getTrainingSet() {
   puts("Texture features extraction\n");
 
   vector<ImNode> posImgs;
-  FILE *anot = fopen("../dataset/Train/annotations.lst", "r");
+  ifstream anot("../dataset/Train/annotations.lst");
   vector<ImNode> imNodes;
+  int posSamples = 0;
 
-  char temp[1024];
-  while(fgets(temp, 1024, anot)) {
-    printf("%s\n", temp);
+  while(anot.getline(temp, maxlen)) {
     string curPath = "../dataset/" + string(temp);
-    FILE *curAnot = fopen(curPath.c_str(), "r");
+    ifstream curAnot(curPath.c_str());
     ImNode curNode("");
-    while(fgets(temp, 1024, curAnot)) {
+    while(curAnot.getline(temp, maxlen)) {
       int n = strlen(temp);
       if(n <= 3) continue;
       if(temp[0] == '#') continue;
-      printf("%s", temp);
       vector<string> tokens;
       boost::algorithm::split(tokens, temp, boost::is_any_of(" ,()\"-':"), 
           boost::token_compress_on);
-      for(int i = 0; i < (int) tokens.size(); ++i)
-        TRACE(tokens[i]);
-
-      continue;
       if(tokens[1] == "filename") {
         curNode = ImNode(tokens[2]);
         continue;
@@ -91,34 +89,34 @@ void getTrainingSet() {
         curNode.Ymax.push_back(ymax);
         continue;
       }
-
     }
-    printf("windows: %d\n", (int) curNode.Ymax.size());
+    posSamples += (int) curNode.Ymax.size();
     imNodes.push_back(curNode);
   }
+  printf("Read %d pos window annotations from %d images", posSamples, (int) imNodes.size());
 
 
   /*
-  vector<double> tex_features;
-  for(int p = 0; p < 4; ++p) { // co-occ type 
-    vector<TextBlock> t = getTextBlocks(argv[1], p);
-    for(int i = 0; i < (int) t.size(); ++i) {
-      vector<double> f = t[i].getFeatures();
-      tex_features.insert(tex_features.end(), f.begin(), f.end());
-    }
-  }
-  */
+     vector<double> tex_features;
+     for(int p = 0; p < 4; ++p) { // co-occ type 
+     vector<TextBlock> t = getTextBlocks(argv[1], p);
+     for(int i = 0; i < (int) t.size(); ++i) {
+     vector<double> f = t[i].getFeatures();
+     tex_features.insert(tex_features.end(), f.begin(), f.end());
+     }
+     }
+     */
 }
 
 int main(int argc, char** argv) {
   getTrainingSet();
 
   /*
-  Model model();
+     Model model();
 
-  printf("Dodano %d text znacajki\n", (int) tex_features.size());
-  puts("Done\n");
-  */
+     printf("Dodano %d text znacajki\n", (int) tex_features.size());
+     puts("Done\n");
+     */
 
   return 0;
 }
