@@ -45,16 +45,15 @@ namespace texture {
   using namespace cv;
   using namespace std;
 
-  vector<TextBlock> getTextBlocks(char* srcImage, int p) {
-    Mat image = cv::imread(srcImage, 1); //B, G, R
-    TRACE(type2str(image.type()));
+  vector<TextBlock> getTextBlocks(Mat orgImage, int p) {
+    Mat image;
+    orgImage.copyTo(image);
+    //Mat image = cv::imread(srcImage, 1); //B, G, R
     cv::cvtColor(image, image, CV_BGR2HSV); //convertinje u hsv
     Mat m[3];
-    puts("spliting the channels\n");
     cv::split(image, m); // split image channels to 3 matrices m[0], m[1], m[2]
 
     //16 bin color bounds values 1....16
-    puts("normalizing the colors for texture\n");
     for(int i = 0; i < m[0].rows; ++i)
       for(int j = 0; j < m[0].cols; ++j) {
         for(int k = 0; k < image.channels(); ++k) {
@@ -64,7 +63,6 @@ namespace texture {
         }
       }
 
-    puts("per block features calc\n");
     vector<TextBlock> texBlocks;
     // co-occ matrix for channel k on distance d of orientation p
     for(int i = 0; i < m[0].cols; i += (kTexBlockSize / 2) + 1)  {

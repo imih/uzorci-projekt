@@ -9,16 +9,16 @@
 #include "pls.h"
 #include <math.h>
 
-void PLS::normaliz(Vector<float> *vector, Vector<float> *retvector) {
+void PLS::normaliz(Vector<double> *vector, Vector<double> *retvector) {
   double sqr = 0;
-  float  sqrr; 
+  double  sqrr; 
   int i;
 
   for (i = 0; i < vector->GetNElements(); i++) {
     sqr += (double) (vector->GetElement(i) * vector->GetElement(i));
   }	
 
-  sqrr = (float) sqrt(sqr);
+  sqrr = (double) sqrt(sqr);
 
   for (i = 0; i < vector->GetNElements(); i++) {
     retvector->SetElement(i, vector->GetElement(i) * (1/sqrr));
@@ -26,8 +26,8 @@ void PLS::normaliz(Vector<float> *vector, Vector<float> *retvector) {
 }
 
 // multiply transposed of MrxMc matrix M by vr vector v, result is Mc vector
-void PLS::MultiplyTransposeMatrixbyVector(Matrix<float> *M, Vector<float> *v, Vector<float> *retvector) {
-  float *ptM, *ptv, *ptret;
+void PLS::MultiplyTransposeMatrixbyVector(Matrix<double> *M, Vector<double> *v, Vector<double> *retvector) {
+  double *ptM, *ptv, *ptret;
   int i, j;
 
   ptv = v->GetData();
@@ -42,8 +42,8 @@ void PLS::MultiplyTransposeMatrixbyVector(Matrix<float> *M, Vector<float> *v, Ve
 }
 
 // multiply MrxMc matrix M by vr vector v, result is Mr vector
-void PLS::MultiplyMatrixbyVector(Matrix<float> *M, Vector<float> *v, Vector<float> *retvector) {
-  float *ptM, *ptv, *ptret;
+void PLS::MultiplyMatrixbyVector(Matrix<double> *M, Vector<double> *v, Vector<double> *retvector) {
+  double *ptM, *ptv, *ptret;
   int i, j;
 
   ptv = v->GetData();
@@ -59,9 +59,9 @@ void PLS::MultiplyMatrixbyVector(Matrix<float> *M, Vector<float> *v, Vector<floa
 
 
 // Multiply vectors v1' and v2, returns a single number
-float PLS::MultiplyVectorTransposedbyVector(Vector<float> *v1, Vector<float> *v2) {
+double PLS::MultiplyVectorTransposedbyVector(Vector<double> *v1, Vector<double> *v2) {
   int i;
-  float ret = 0;
+  double ret = 0;
 
   for (i = 0; i < v1->GetNElements(); i++)  {
     ret += v1->GetElement(i) * v2->GetElement(i);
@@ -71,7 +71,7 @@ float PLS::MultiplyVectorTransposedbyVector(Vector<float> *v1, Vector<float> *v2
 }
 
 // Multiply vector by scalar, returns a vector size rv
-void PLS::MultiplyVectorandScalar(Vector<float> *v, float s, Vector<float> *retvector) {
+void PLS::MultiplyVectorandScalar(Vector<double> *v, double s, Vector<double> *retvector) {
   int i;
 
   for (i = 0; i < v->GetNElements(); i++)  {
@@ -80,9 +80,9 @@ void PLS::MultiplyVectorandScalar(Vector<float> *v, float s, Vector<float> *retv
 }
 
 // t is rx1 and p is cx1
-void PLS::SubtractFromMatrix(Matrix<float> *M, Vector<float> *t, Vector<float> *p) {
+void PLS::SubtractFromMatrix(Matrix<double> *M, Vector<double> *t, Vector<double> *p) {
   int i, j;
-  float *ptM, *ptt, *ptp;
+  double *ptM, *ptt, *ptp;
 
   ptt = t->GetData();
   ptp = p->GetData();
@@ -96,7 +96,7 @@ void PLS::SubtractFromMatrix(Matrix<float> *M, Vector<float> *t, Vector<float> *
   }
 }
 
-void PLS::SubtractFromVector(Vector<float> *v, Vector<float> *t, float c, float bl) {
+void PLS::SubtractFromVector(Vector<double> *v, Vector<double> *t, double c, double bl) {
   int i;
 
   // Yres=Yres-(b(l)*(t*c'));
@@ -106,13 +106,13 @@ void PLS::SubtractFromVector(Vector<float> *v, Vector<float> *t, float c, float 
   }
 }
 
-void PLS::CopyVector(Vector<float> *v, Vector<float> *retvector) {
+void PLS::CopyVector(Vector<double> *v, Vector<double> *retvector) {
 
-  memcpy(retvector->GetData(), v->GetData(), v->GetNElements() * sizeof(float));
+  memcpy(retvector->GetData(), v->GetData(), v->GetNElements() * sizeof(double));
 }
 
-void PLS::mean(Matrix<float> *M, Vector<float> *retvector) {
-  float *ptM, *ptv;
+void PLS::mean(Matrix<double> *M, Vector<double> *retvector) {
+  double *ptM, *ptv;
   int i,j;
 
   retvector->ResetVector();
@@ -125,12 +125,12 @@ void PLS::mean(Matrix<float> *M, Vector<float> *retvector) {
   }
 
   for (i = 0; i < M->GetNCols(); i++) {
-    ptv[i] = ptv[i] / (float) M->GetNRows();
+    ptv[i] = ptv[i] / (double) M->GetNRows();
   }
 }
 
-void PLS::mean(Vector<float> *M, Vector<float> *retvector) {
-  float *ptM, *ptv;
+void PLS::mean(Vector<double> *M, Vector<double> *retvector) {
+  double *ptM, *ptv;
   int j;
 
   retvector->ResetVector();
@@ -140,11 +140,11 @@ void PLS::mean(Vector<float> *M, Vector<float> *retvector) {
     ptv[0] += ptM[j];
   }
 
-  ptv[0] /= (float) M->GetNElements();
+  ptv[0] /= (double) M->GetNElements();
 }
 
-void PLS::std(Matrix<float> *M, Vector<float> *mean, Vector<float> *retvector) {
-  float *ptM, *ptret, *ptmean;
+void PLS::std(Matrix<double> *M, Vector<double> *mean, Vector<double> *retvector) {
+  double *ptM, *ptret, *ptmean;
   int i, j;
 
   retvector->ResetVector();
@@ -159,7 +159,7 @@ void PLS::std(Matrix<float> *M, Vector<float> *mean, Vector<float> *retvector) {
   }
 
   for (i = 0; i < M->GetNCols(); i++) {
-    ptret[i] = ptret[i] / (((float)M->GetNRows())- (float)1.0);
+    ptret[i] = ptret[i] / (((double)M->GetNRows())- (double)1.0);
     ptret[i] = sqrt(ptret[i]);
     if (ptret[i] < EPSILON) {
       ptret[i] = 1;
@@ -167,8 +167,8 @@ void PLS::std(Matrix<float> *M, Vector<float> *mean, Vector<float> *retvector) {
   }
 }
 
-void PLS::std(Vector<float> *M, Vector<float> *mean, Vector<float> *retvector) {
-  float *ptM, *ptret, *ptmean;
+void PLS::std(Vector<double> *M, Vector<double> *mean, Vector<double> *retvector) {
+  double *ptM, *ptret, *ptmean;
   int i;
 
   retvector->ResetVector();
@@ -180,7 +180,7 @@ void PLS::std(Vector<float> *M, Vector<float> *mean, Vector<float> *retvector) {
     ptret[0] += (ptM[i] - ptmean[0]) * (ptM[i] - ptmean[0]);
   }
 
-  ptret[0] /= (((float)M->GetNElements())- (float)1.0);
+  ptret[0] /= (((double)M->GetNElements())- (double)1.0);
   ptret[0] = sqrt(ptret[0]);
 
   if (ptret[0] < EPSILON) {
@@ -188,9 +188,9 @@ void PLS::std(Vector<float> *M, Vector<float> *mean, Vector<float> *retvector) {
   }
 }
 
-void PLS::zscore(Matrix<float> *M, Vector<float> *mean, Vector<float> *std) {
+void PLS::zscore(Matrix<double> *M, Vector<double> *mean, Vector<double> *std) {
   int i,j;
-  float *ptM, *ptmean, *ptstd;
+  double *ptM, *ptmean, *ptstd;
 
   ptmean = mean->GetData();
   ptstd = std->GetData();
@@ -203,7 +203,7 @@ void PLS::zscore(Matrix<float> *M, Vector<float> *mean, Vector<float> *std) {
 }
 
 void PLS::ComputeWstar() {
-  Matrix<float> *tmp1, *tmp2, *tmp3;
+  Matrix<double> *tmp1, *tmp2, *tmp3;
 
   //Wstar=W*inv(P'*W);
   tmp1 = TransposeMatrix(P);
@@ -216,9 +216,9 @@ void PLS::ComputeWstar() {
   delete tmp3;
 }
 
-void PLS::zscore(Vector<float> *M, Vector<float> *mean, Vector<float> *std) {
+void PLS::zscore(Vector<double> *M, Vector<double> *mean, Vector<double> *std) {
   int i;
-  float *ptM, *ptmean, *ptstd;
+  double *ptM, *ptmean, *ptstd;
 
   ptmean = mean->GetData();
   ptstd = std->GetData();
@@ -228,20 +228,20 @@ void PLS::zscore(Vector<float> *M, Vector<float> *mean, Vector<float> *std) {
   }
 }
 
-void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDir, float ExplainedX, float ExplainedY) {
-  float  c; // vectors
+void PLS::runpls(Matrix<double> *X, Vector<double> *Y, int nfactor, char *OutputDir, double ExplainedX, double ExplainedY) {
+  double  c; // vectors
   int i, j;
-  float b_l, tmpscalar;  // scalars
+  double b_l, tmpscalar;  // scalars
   int kk;
-  float dt=0;
+  double dt=0;
   int maxsteps, step;
   int nsamples, nfeatures;
-  Vector<float> *t, *u, *t0, *Vcol, *Vrow, *w, *p, *C;
-  Matrix<float> *U;
-  Vector<float> *ymean, *ystd;
+  Vector<double> *t, *u, *t0, *Vcol, *Vrow, *w, *p, *C;
+  Matrix<double> *U;
+  Vector<double> *ymean, *ystd;
   double sumX2, sumY2, percX, percY, percAux, cumsum, cumsumY;
-  Matrix<float> *tmpM;
-  Vector<float> *tmpV;
+  Matrix<double> *tmpM;
+  Vector<double> *tmpV;
   vector<int> selectedCols;
 
   // initially, clear current PLS model (if there is one)
@@ -251,13 +251,13 @@ void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDi
   nfeatures = X->GetNCols();
 
 
-  Yorig = new Vector<float> (nsamples);
+  Yorig = new Vector<double> (nsamples);
   CopyVector(Y, Yorig);
 
   maxsteps = 100;
 
-  Xmean = new Vector<float> (nfeatures);
-  Xstd = new Vector<float> (nfeatures);
+  Xmean = new Vector<double> (nfeatures);
+  Xstd = new Vector<double> (nfeatures);
 
   mean(X, Xmean);
   std(X, Xmean, Xstd);
@@ -277,8 +277,8 @@ void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDi
   //   WriteMatrix(mean, 1, cX, "Xmean.matrix");
   //   WriteMatrix(std, 1, cX, "Xstd.matrix");
   // Y
-  ymean = new Vector<float> (1);
-  ystd = new Vector<float> (1);
+  ymean = new Vector<double> (1);
+  ystd = new Vector<double> (1);
   mean(Y, ymean);
   std(Y, ymean, ystd);
   zscore(Y, ymean, ystd);
@@ -298,21 +298,21 @@ void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDi
   //W = umd_allocateMatrix(cX, nfactor);
   //b = umd_allocateVector(nfactor);
 
-  U = new Matrix<float> (nsamples, nfactor);
-  C = new Vector<float> (nfactor);
-  T = new Matrix<float> (nsamples, nfactor);
-  P = new Matrix<float> (nfeatures, nfactor);
-  W = new Matrix<float> (nfeatures, nfactor);
-  b = new Vector<float> (nfactor);
+  U = new Matrix<double> (nsamples, nfactor);
+  C = new Vector<double> (nfactor);
+  T = new Matrix<double> (nsamples, nfactor);
+  P = new Matrix<double> (nfeatures, nfactor);
+  W = new Matrix<double> (nfeatures, nfactor);
+  b = new Vector<double> (nfactor);
 
 
-  t = new Vector<float> (nsamples);
-  u = new Vector<float> (nsamples);
-  t0 = new Vector<float> (nsamples);
-  Vcol = new Vector<float> (nfeatures);
-  Vrow = new Vector<float> (nsamples);
-  w = new Vector<float> (nfeatures);
-  p = new Vector<float> (nfeatures);
+  t = new Vector<double> (nsamples);
+  u = new Vector<double> (nsamples);
+  t0 = new Vector<double> (nsamples);
+  Vcol = new Vector<double> (nfeatures);
+  Vrow = new Vector<double> (nsamples);
+  w = new Vector<double> (nfeatures);
+  p = new Vector<double> (nfeatures);
 
 
   // compute square of the sum of X and Y
@@ -507,7 +507,7 @@ void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDi
 
 
   // create auxiliar vector for zscore
-  zdataV = new Vector<float>(Wstar->GetNRows());
+  zdataV = new Vector<double>(Wstar->GetNRows());
 
   // set max number of factors
   this->maxFactors = this->Wstar->GetNCols();
@@ -540,7 +540,7 @@ PLS::PLS() {
   maxFactors = -1;
 }
 
-void PLS::SetMatrices(Matrix<float> *W, Matrix<float> *Wstar, Matrix<float> *P, Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *b) {
+void PLS::SetMatrices(Matrix<double> *W, Matrix<double> *Wstar, Matrix<double> *P, Vector<double> *Xmean, Vector<double> *Xstd, Vector<double> *b) {
 
   ClearPLS();
 
@@ -554,7 +554,7 @@ void PLS::SetMatrices(Matrix<float> *W, Matrix<float> *Wstar, Matrix<float> *P, 
 
 
   // create auxiliar vector for zscore
-  zdataV = new Vector<float>(Wstar->GetNRows());
+  zdataV = new Vector<double>(Wstar->GetNRows());
 }
 
 
@@ -688,7 +688,7 @@ void PLS::ClearExtraMatricesPLSReg() {
 
 
 
-void PLS::Projection(float *feat, float *retproj, int nfactors) {
+void PLS::Projection(double *feat, double *retproj, int nfactors) {
   int i;
 
   mat.ZscoreSSE(feat, Xmean->GetData(), Xstd->GetData(), zdataV->GetData(), Wstar->GetNRows());
@@ -700,7 +700,7 @@ void PLS::Projection(float *feat, float *retproj, int nfactors) {
 }
 
 
-void PLS::ExecuteZScore(float *feat, float *zscoreResult) {
+void PLS::ExecuteZScore(double *feat, double *zscoreResult) {
 
 
   mat.ZscoreSSE(feat, Xmean->GetData(), Xstd->GetData(), zscoreResult, Wstar->GetNRows());
@@ -708,8 +708,8 @@ void PLS::ExecuteZScore(float *feat, float *zscoreResult) {
 
 }
 
-void PLS::InitializePLSModel(Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *Yorig, Vector<float> *b, Matrix<float> *T, Matrix<float> *P,
-    Matrix<float> *W, Matrix<float> *Wstar) {
+void PLS::InitializePLSModel(Vector<double> *Xmean, Vector<double> *Xstd, Vector<double> *Yorig, Vector<double> *b, Matrix<double> *T, Matrix<double> *P,
+    Matrix<double> *W, Matrix<double> *Wstar) {
 
   ClearPLS();
 
@@ -742,7 +742,7 @@ void PLS::InitializePLSModel(Vector<float> *Xmean, Vector<float> *Xstd, Vector<f
   if (Wstar != NULL) {
     this->Wstar = Wstar->Copy();
     // create aux variable
-    zdataV = new Vector<float>(Wstar->GetNRows());
+    zdataV = new Vector<double>(Wstar->GetNRows());
     // set max number of factors
     this->maxFactors = this->Wstar->GetNCols();
   }

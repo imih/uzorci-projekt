@@ -46,19 +46,19 @@ public:
 	Model(string filename);
 
 	// build PLS model when response variable has only two values (for classification)
-	void CreatePLSModel(Matrix<float> *mPos, Matrix<float> *mNeg, int nfactors);
+	void CreatePLSModel(Matrix<double> *mPos, Matrix<double> *mNeg, int nfactors);
 
 	// build PLS model for any response variable
-	void CreatePLSModel(Matrix<float> *X, Vector<float> *Y, int nfactors);
+	void CreatePLSModel(Matrix<double> *X, Vector<double> *Y, int nfactors);
 
 	// save model to a file
 	void SaveModel(string filename);
 
 	// project feature vector using this model
-	Vector<float> *ProjectFeatureVector(Vector<float> *feat);
+	Vector<double> *ProjectFeatureVector(Vector<double> *feat);
 	
 	// project feature matrix
-	Matrix<float> *ProjectFeatureMatrix(Matrix<float> *featMat);
+	Matrix<double> *ProjectFeatureMatrix(Matrix<double> *featMat);
 
 	// get number of features
 	int GetNumberFeatures() { return nfeatures; } 

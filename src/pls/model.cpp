@@ -43,22 +43,22 @@ void Model::SaveModel(string filename) {
   storage.WriteModel(filename, this);
 }
 
-Vector<float> *Model::ProjectFeatureVector(Vector<float> *feat) {
-  Vector<float> *ret;	
-  ret = new Vector<float>(this->nfactors);
+Vector<double> *Model::ProjectFeatureVector(Vector<double> *feat) {
+  Vector<double> *ret;	
+  ret = new Vector<double>(this->nfactors);
   Projection(feat->GetData(), ret->GetData(), nfactors);
   return ret;
 }
 
 
-Matrix<float> *Model::ProjectFeatureMatrix(Matrix<float> *featMat) {
-  Matrix<float> *ret;	
-  Vector<float> *featV, *auxv;	
+Matrix<double> *Model::ProjectFeatureMatrix(Matrix<double> *featMat) {
+  Matrix<double> *ret;	
+  Vector<double> *featV, *auxv;	
   int i;
 
-  auxv = new Vector<float>(this->nfactors);
-  featV = new Vector<float>(this->nfactors);
-  ret = new Matrix<float>(featMat->GetNRows(), this->nfactors);
+  auxv = new Vector<double>(this->nfactors);
+  featV = new Vector<double>(this->nfactors);
+  ret = new Matrix<double>(featMat->GetNRows(), this->nfactors);
 
   for (i = 0; i < featMat->GetNRows(); i++) {
     featV = featMat->GetRow(i);
@@ -72,9 +72,9 @@ Matrix<float> *Model::ProjectFeatureMatrix(Matrix<float> *featMat) {
   return ret;
 }
 
-void Model::CreatePLSModel(Matrix<float> *mPos, Matrix<float> *mNeg, int nfactors) {
-  Matrix<float> *X;
-  Vector<float> *Y;
+void Model::CreatePLSModel(Matrix<double> *mPos, Matrix<double> *mNeg, int nfactors) {
+  Matrix<double> *X;
+  Vector<double> *Y;
 
   this->nfactors = nfactors;
 
@@ -88,9 +88,9 @@ void Model::CreatePLSModel(Matrix<float> *mPos, Matrix<float> *mNeg, int nfactor
 
   X = mPos->ConcatenateMatricesRows(mNeg, mPos);
 
-  Y = new Vector<float>(X->GetNRows());
-  Y->SetRangeElements(0, mNeg->GetNRows(), (float) -1);
-  Y->SetRangeElements(mNeg->GetNRows(), mPos->GetNRows(), (float) 1);
+  Y = new Vector<double>(X->GetNRows());
+  Y->SetRangeElements(0, mNeg->GetNRows(), (double) -1);
+  Y->SetRangeElements(mNeg->GetNRows(), mPos->GetNRows(), (double) 1);
 
   this->runpls(X, Y, nfactors, NULL);
 
@@ -99,9 +99,9 @@ void Model::CreatePLSModel(Matrix<float> *mPos, Matrix<float> *mNeg, int nfactor
   delete Y;
 }
 
-void Model::CreatePLSModel(Matrix<float> *X, Vector<float> *Y, int nfactors) {
-  Matrix<float> *Xnew;
-  Vector<float> *Ynew;
+void Model::CreatePLSModel(Matrix<double> *X, Vector<double> *Y, int nfactors) {
+  Matrix<double> *Xnew;
+  Vector<double> *Ynew;
 
   // number of factors
   this->nfactors = nfactors;
@@ -110,9 +110,7 @@ void Model::CreatePLSModel(Matrix<float> *X, Vector<float> *Y, int nfactors) {
   this->nfeatures = X->GetNCols();
 
   // copy matrices
-  Xnew = X->Copy();
-  Ynew = Y->Copy();
-
+  Xnew = X->Copy(); Ynew = Y->Copy(); 
   // run PLS
   this->runpls(Xnew, Ynew, nfactors, NULL);
 

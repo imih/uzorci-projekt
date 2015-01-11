@@ -79,9 +79,9 @@ int Storage::ReadData(char *data, CvFileNode *parentNode) {
   return idx;
 }
 
-Matrix<float> *Storage::ReadMatrix(string name, CvFileNode *parentNode) {
+Matrix<double> *Storage::ReadMatrix(string name, CvFileNode *parentNode) {
   CvFileNode *fsnode;
-  Matrix<float> *m;
+  Matrix<double> *m;
   int r, c;
   char *MData;
   int nbytes;
@@ -93,7 +93,7 @@ Matrix<float> *Storage::ReadMatrix(string name, CvFileNode *parentNode) {
   fsnode = cvGetFileNodeByName(fs, parentNode, name.c_str());
   r = cvReadIntByName(fs, fsnode, "rows");
   c = cvReadIntByName(fs, fsnode, "cols");
-  m = new Matrix<float>(r,c);
+  m = new Matrix<double>(r,c);
   MData = (char *) m->GetData();
   nbytes = m->GetNumBytes();
 
@@ -108,9 +108,9 @@ Matrix<float> *Storage::ReadMatrix(string name, CvFileNode *parentNode) {
 
 
 
-Vector<float> *Storage::ReadVector(string name, CvFileNode *parentNode) {
+Vector<double> *Storage::ReadVector(string name, CvFileNode *parentNode) {
   CvFileNode *fsnode;
-  Vector<float> *v;
+  Vector<double> *v;
   int r, c;
   char *MData;
   int nbytes;
@@ -125,7 +125,7 @@ Vector<float> *Storage::ReadVector(string name, CvFileNode *parentNode) {
   if (r != 1 && c != 1) 
     DET_ERROR("not a vector!");
 
-  v = new Vector<float>(max(r,c));
+  v = new Vector<double>(max(r,c));
   MData = (char *) v->GetData();
   nbytes = v->GetNumBytes();
 
@@ -141,7 +141,7 @@ Vector<float> *Storage::ReadVector(string name, CvFileNode *parentNode) {
 
 
 
-void Storage::WriteData(int cols, int rows, float *data, int NumBytes, string name) {
+void Storage::WriteData(int cols, int rows, double *data, int NumBytes, string name) {
   char *str, str2[MAXSTRSTORE + 1];
   int strSize, i;
   Encoding encode;
@@ -205,14 +205,14 @@ void Storage::WriteModel(string filename, Model *model) {
 
 
 void Storage::ReadModel(Model *model, std::string filename) {
-  Matrix<float> *W = NULL;
-  Matrix<float> *P	 = NULL;
-  Matrix<float> *Wstar = NULL;
-  Matrix<float> *T = NULL;
-  Matrix<float> *Y = NULL;
-  Vector<float> *Xmean = NULL;
-  Vector<float> *Xstd = NULL;
-  Vector<float> *b = NULL;
+  Matrix<double> *W = NULL;
+  Matrix<double> *P	 = NULL;
+  Matrix<double> *Wstar = NULL;
+  Matrix<double> *T = NULL;
+  Matrix<double> *Y = NULL;
+  Vector<double> *Xmean = NULL;
+  Vector<double> *Xstd = NULL;
+  Vector<double> *b = NULL;
   map<string, map<string, string> > featParams;
   string tmpstring;
   vector<string> liststring;
