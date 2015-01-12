@@ -108,6 +108,7 @@ int main(int argc, char** argv) {
   for(int im = 0; im < (int) negImNodes.size(); ++im) 
     for(int i = 0; i + rowWin <= negImNodes[im].image.rows; i += rowWin) 
       for(int j = 0; j + colWin <= negImNodes[im].image.cols; j += colWin) {
+        // mozemo exktraktat vise negativnih primjera! TODO
         Mat curWin = Mat(posImNodes[im].image, Rect(i, j, rowWin, colWin));
         vector<TextBlock> tex_features = getTextFeatures(curWin);
         perBlockNegTex.push_back(tex_features);
@@ -123,12 +124,10 @@ int main(int argc, char** argv) {
 
   // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
   set<int> texSkip, hogSkip;
+  // ovo bi trebalo biti na validation setu! TODO
+  puts("Performing per block analysis...\n");
   plsPerBlock(perBlockPosTex, perBlockNegTex, texSkip,
      perBlockPosHog, perBlockNegHog, hogSkip);
-
-
-
-
 
 
 

@@ -28,7 +28,7 @@ namespace texture {
     return f;
   }
 
-  Haralick TextBlock::calcHaralick(cv::Mat blockIm, int d) const {
+  Haralick TextBlock::calcHaralick(cv::Mat blockIm, int d = 1) const {
     const int dx[] = {0, -1, -1,  1}; //P0, P90, P45, P135
     const int dy[] = {1,  0,  1, -1};
     int p = coOccType;
@@ -62,10 +62,7 @@ namespace texture {
 
   void TextBlock::addChannel(int k, cv::Mat blockIm) {
     //for channel k make co-occur for every dist d
-    int maxD = min(blockIm.rows, blockIm.cols);
-    for(int d = 1; d <= maxD; ++d) {
-      texF.push_back(calcHaralick(blockIm, d));
-    }
+    texF.push_back(calcHaralick(blockIm));
   }
 
   Haralick::Haralick(Mat cooc) {
