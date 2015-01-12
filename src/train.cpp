@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
   vector<vector<TextBlock> > perBlockPosTex;
   vector<vector<HOGBlock> > perBlockPosHog;
   clock_t begin = clock();
+
   for(int im = 0; im < (int) posImNodes.size(); ++im) {
     Mat curWin = posImNodes[im].image;
     vector<TextBlock> tex_features = getTextFeatures(curWin);
@@ -108,8 +109,8 @@ int main(int argc, char** argv) {
   for(int im = 0; im < (int) negImNodes.size(); ++im) 
     for(int i = 0; i + rowWin <= negImNodes[im].image.rows; i += rowWin) 
       for(int j = 0; j + colWin <= negImNodes[im].image.cols; j += colWin) {
-        // mozemo exktraktat vise negativnih primjera! TODO
-        Mat curWin = Mat(posImNodes[im].image, Rect(i, j, rowWin, colWin));
+        // mozemo extraktat vise negativnih primjera! TODO
+        Mat curWin = Mat(negImNodes[im].image, Rect(j, i, colWin, rowWin));
         vector<TextBlock> tex_features = getTextFeatures(curWin);
         perBlockNegTex.push_back(tex_features);
         vector<HOGBlock> hog_features = getHOGFeatures(curWin);

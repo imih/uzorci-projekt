@@ -13,5 +13,9 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   //chose subset of blocks you want to have in the 1st stage using 
   //10-fold cross validation 
   //TODO
+
+
+
+
   return;
 }
