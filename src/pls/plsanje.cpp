@@ -20,7 +20,7 @@ double getVip(Model& model) {
     ret1 += bk * bk * wkj * wkj;
     ret2 += bk * bk;
   }
-  
+
   return sqrt(ret1 * model.nfeatures  / ret2);
 }
 
@@ -61,27 +61,30 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
   int hblocks = (int) posHog[0].size();
   vector<double> hvip(tblocks, 0);
-  int mh = (int) posHog[0][0].f.cols;
+  int mh = (int) posHog[0][0].f.n;
   int pnh = (int) posHog.size();
   int nnh = (int) negHog.size();
   for(int i = 0; i < hblocks; ++i) {
     mPos = new Matrix<float>(pnh, mh);
-    //FILL TODO
-
+    for(int j = 0; j < pnh; ++j) {
+      Vector<float> featureV = posHog[j][i].f;
+      mPos->SetRow(&featureV, j);
+    }
 
     mNeg = new Matrix<float>(nnh, mh);
-    //FILL TODO
-
+    for(int j = 0; j < nnh; ++j) {
+      Vector<float> featureV = negHog[j][i].f;
+      mNeg->SetRow(&featureV, j);
+    }
     model.CreatePLSModel(mPos, mNeg , kBlkFactors);
     hvip[i] = getVip(model);
     delete mPos, mNeg;
   }
 
 
-
   //**************************************************************
   //chose subset of blocks you want to have in the 1st stage using 
-  //10-fold cross validation  TODO
+  //10-fold cross validation  
   int pt_n = (int) posTex.size() / 10;
   int nt_n = (int) negTex.size() / 10;
   int ph_n = (int) posHog.size() / 10;

@@ -1,12 +1,13 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
+#include "../pls/maths.h"
 
 namespace hog {
+
   struct HOGBlock {
-    cv::Mat f;
+    Vector<float> f;
     int blockId;
-    HOGBlock(cv::Mat f_, int block_id) {
+    HOGBlock(Vector<float>& f_, int block_id) {
       f = f_;
       blockId = block_id;
     }

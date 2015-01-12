@@ -12,14 +12,10 @@ namespace texture {
 
   void TextBlock::createFeatures() {
     if(f.n) return;
-    f = Vector<float>(texF.size() * 13);
     for(int i = 0; i < texF.size(); ++i) {
-      //item.k item.d item.p
-      vector<float> dubH = texF[i].getFeatures();
-      for(int j = 0;  j < dubH.size(); ++j) {
-        f.SetElement(13 * i + j, dubH[j]);
-      }
+      f.SetElement(i, texF[i]);
     }
+    texF.clear();
   }
 
   Vector<float> TextBlock::getFeatures() {
@@ -28,10 +24,9 @@ namespace texture {
     return f;
   }
 
-  Haralick TextBlock::calcHaralick(cv::Mat blockIm, int d = 1) const {
+  vector<float> TextBlock::calcHaralick(Mat& blockIm, int d = 1) {
     const int dx[] = {0, -1, -1,  1}; //P0, P90, P45, P135
     const int dy[] = {1,  0,  1, -1};
-    int p = coOccType;
 
     //Matrix of floats 
     Mat cooc = Mat::zeros(kColTexBinSize + 1, kColTexBinSize + 1, CV_32F);
@@ -41,11 +36,11 @@ namespace texture {
     int r = blockIm.rows;
     int c = blockIm.cols;
     for(int i = 0; i < r; ++i) {
-      int x = i + d * dx[p];
+      int x = i + d * dx[coOccType];
       if(x < 0 || x >= r) 
         continue;
       for(int j = 0; j < c; ++j) {
-        int y = j + d * dy[p];
+        int y = j + d * dy[coOccType];
         if(y < 0 || y >= c)
           continue;
         int val1 = (int) blockIm.at<unsigned char>(i, j);
@@ -57,15 +52,6 @@ namespace texture {
       }
     }
 
-    return Haralick(cooc);
-  }
-
-  void TextBlock::addChannel(int k, cv::Mat blockIm) {
-    //for channel k make co-occur for every dist d
-    texF.push_back(calcHaralick(blockIm));
-  }
-
-  Haralick::Haralick(Mat cooc) {
     //input: Matrix of floats
     int ng = cooc.rows - 1; // n = ng + 1
     long long  R = 0;
@@ -79,7 +65,7 @@ namespace texture {
     Mat pxpy = Mat::zeros(1, 2 * ng + 1, CV_32F);
     Mat pxmy = Mat::zeros(1, ng, CV_32F);
 
-    f = vector<float>(13);
+    vector<float> f = vector<float>(13);
     for(int i = 1; i <= ng; ++i) {
       for(int j = 1; j <= ng; ++j) {
         p.at<float>(i, j) /= R;
@@ -135,10 +121,13 @@ namespace texture {
 
     f[11] = (f[8] - hxy1) / max(hx, hy);
     f[12] = sqrt(1 - exp(-2 * hxy2 - f[8]));
+    return f;
   }
 
-  vector<float> Haralick::getFeatures() {
-    return f;
+  void TextBlock::addChannel(int k, cv::Mat& blockIm) {
+    //for channel k make co-occur for every dist d
+    vector<float> curH = calcHaralick(blockIm);
+    texF.insert(texF.end(), curH.begin(), curH.end());
   }
 
 }

@@ -45,29 +45,28 @@ namespace hog {
     }
   }
 
-  void calc_hog_and_color(Mat *grad, Mat &features) {
+  void calc_hog_and_color(Mat *grad, Vector<float> &features) {
     Mat planes[ANGLE_CNT][3];
 
     for (int i = 0; i < ANGLE_CNT; ++i)
       split(grad[i], planes[i]);
 
-    vector< double > color_hist(3, 0.0);
-    vector<vector< double > > angle_hist(3, vector<double>(ANGLE_BIN_CNT, 0.0));
+    vector< float > color_hist(3, 0.0);
+    vector<vector< float > > angle_hist(3, vector<float>(ANGLE_BIN_CNT, 0.0));
 
     int r = grad[0].rows;
     int c = grad[0].cols;
 
-    features.create(1, 3 * (ANGLE_BIN_CNT + 1), CV_32F); // ove tipove vidjet malo..
-    features.addref();
+    features = Vector<float>(3 * (ANGLE_BIN_CNT + 1));
     for (int i = 0; i < r; ++i) {
       for (int j = 0; j < c; ++j) {
-        vector< double > square_norms(3);
+        vector< float > square_norms(3);
         for (int ch = 0; ch < 3; ++ch) {
-          double dx = planes[ANGLE_0][ch].at< unsigned char >(i, j);
-          double dy = planes[ANGLE_90][ch].at< unsigned char >(i, j);
+          float dx = planes[ANGLE_0][ch].at< unsigned char >(i, j);
+          float dy = planes[ANGLE_90][ch].at< unsigned char >(i, j);
           square_norms[ch] = dx * dx + dy * dy;
 
-          double alpha = atan2(dy, dx);
+          float alpha = atan2(dy, dx);
           if (alpha < 0.0) alpha += PI;
           if (alpha >= PI) alpha = 0.0;
 
@@ -88,12 +87,13 @@ namespace hog {
 
     int f_pos = 0;
     for(int ch = 0; ch < 3; ++ch) {
-      for(int i = 0; i < ANGLE_BIN_CNT; ++i) 
-        features.at<float>(0, f_pos) = angle_hist[ch][i];
-      f_pos++;
+      for(int i = 0; i < ANGLE_BIN_CNT; ++i) {
+        features.SetElement(f_pos, angle_hist[ch][i]);
+        f_pos++;
+      }
     }
     for (int i = 0; i < 3; ++i) {
-      features.at< float >(0, f_pos) = color_hist[i];
+      features.SetElement(f_pos, color_hist[i]);
       f_pos++;
     }
   }
@@ -143,7 +143,7 @@ namespace hog {
           for (int a = 0; a < ANGLE_CNT; ++a)
             blk_grad[a] = Mat(image, Rect(j, i, block_sizes[bl][0], block_sizes[bl][1]));
 
-          Mat feature_vector; 
+          Vector<float> feature_vector; 
           calc_hog_and_color(blk_grad, feature_vector);
           feature_vectors.push_back(HOGBlock(feature_vector, block_id++));
         }
@@ -154,33 +154,33 @@ namespace hog {
 }
 
 /*
-namespace {
-  // main
-  int main(int argc, char **argv) {
-    Mat image;
-    image = imread(argv[1], 1);
+   namespace {
+// main
+int main(int argc, char **argv) {
+Mat image;
+image = imread(argv[1], 1);
 
-    if (!image.data) {
-      printf("a di je slika?\n");
-      return -1;
-    }
+if (!image.data) {
+printf("a di je slika?\n");
+return -1;
+}
 
-    Mat grad[ANGLE_CNT];
-    hog::calc_gradients(image, grad);
-    char buf[100];
+Mat grad[ANGLE_CNT];
+hog::calc_gradients(image, grad);
+char buf[100];
 
-    vector< Mat > feature_vectors;
-    hog::calc_features(image, feature_vectors);
-    printf("imam %d feature vectora\n", (int)feature_vectors.size());
+vector< Mat > feature_vectors;
+hog::calc_features(image, feature_vectors);
+printf("imam %d feature vectora\n", (int)feature_vectors.size());
 
-    namedWindow(buf, CV_WINDOW_AUTOSIZE);
-    for (int i = 0; i < ANGLE_CNT; ++i) {
-      sprintf(buf, "grad %d", i);
-      imshow("gradijent", grad[i]);
-      waitKey(0);
-    }
+namedWindow(buf, CV_WINDOW_AUTOSIZE);
+for (int i = 0; i < ANGLE_CNT; ++i) {
+sprintf(buf, "grad %d", i);
+imshow("gradijent", grad[i]);
+waitKey(0);
+}
 
-    return 0;
-  }
+return 0;
+}
 }
 */
