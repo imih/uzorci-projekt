@@ -12,6 +12,7 @@ namespace texture {
 
   void TextBlock::createFeatures() {
     if(f.n) return;
+    f = Vector<float>((int) texF.size());
     for(int i = 0; i < texF.size(); ++i) {
       f.SetElement(i, texF[i]);
     }
