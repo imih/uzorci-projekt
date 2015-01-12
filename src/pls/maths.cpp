@@ -33,9 +33,9 @@
 #include "maths.h"
 
 
-double Maths::DotProductSSENotMultof4(double *v, double *v2, int n) {
+float Maths::DotProductSSENotMultof4(float *v, float *v2, int n) {
 __m128 a, b, c, d;
-double out_sse[4];
+float out_sse[4];
 int i, n2;
 
 	d = _mm_setzero_ps();
@@ -71,7 +71,7 @@ int i, n2;
 
 
 
-void Maths::ZscoreSSE(double *data, double *mean, double *std, double *outputvect, int n) {
+void Maths::ZscoreSSE(float *data, float *mean, float *std, float *outputvect, int n) {
 __m128 a, b, c, d, e;
 int i, n2;
 
@@ -119,11 +119,11 @@ int i, n2;
 
 
 // convert from my format to OpenCV format
-void ConvertMatrixFormat(Matrix<double> *m1, CvMat *M1, double **data) {
-double *d1;
+void ConvertMatrixFormat(Matrix<float> *m1, CvMat *M1, float **data) {
+float *d1;
 int idx, x, y;
 
-	d1 = (double *) malloc(m1->GetNCols() * m1->GetNRows() * sizeof(double));
+	d1 = (float *) malloc(m1->GetNCols() * m1->GetNRows() * sizeof(float));
 	*data = d1;
 
 	// copy data to convert to rowwise
@@ -141,9 +141,9 @@ int idx, x, y;
 
 
 // multiplication of two matrices
-Matrix<double> *MultMatrices(Matrix<double> *m1, Matrix<double> *m2) {
-Matrix<double> *dataRet;
-double *d1, *d2, *d3;
+Matrix<float> *MultMatrices(Matrix<float> *m1, Matrix<float> *m2) {
+Matrix<float> *dataRet;
+float *d1, *d2, *d3;
 CvMat M1, M2, M3;
 int x, y, idx;
 
@@ -153,7 +153,7 @@ int x, y, idx;
 		exit(2);
 	}
 
-	dataRet = new Matrix<double>(m1->GetNRows(), m2->GetNCols());
+	dataRet = new Matrix<float>(m1->GetNRows(), m2->GetNCols());
 
 
 	ConvertMatrixFormat(m1, &M1, &d1);
@@ -183,10 +183,10 @@ int x, y, idx;
 
 
 // invert a matrix
-Matrix<double> *InvMatrix(Matrix<double> *m) {
-double *d1, *d2;
+Matrix<float> *InvMatrix(Matrix<float> *m) {
+float *d1, *d2;
 CvMat M1, M2;
-Matrix<double> *dataRet;
+Matrix<float> *dataRet;
 int x, y, idx;
 double ret;
 
@@ -197,7 +197,7 @@ double ret;
 	}	
 
 
-	dataRet = new Matrix<double>(m->GetNRows(), m->GetNCols());
+	dataRet = new Matrix<float>(m->GetNRows(), m->GetNCols());
 
 	ConvertMatrixFormat(m, &M1, &d1);
 	ConvertMatrixFormat(dataRet, &M2, &d2);
@@ -228,14 +228,14 @@ double ret;
 
 
 // transpose matrix
-Matrix<double> *TransposeMatrix(Matrix<double> *m) {
-double *d1, *d2;
+Matrix<float> *TransposeMatrix(Matrix<float> *m) {
+float *d1, *d2;
 CvMat M1, M2;
-Matrix<double> *dataRet;
+Matrix<float> *dataRet;
 int x, y, idx;
 
 
-	dataRet = new Matrix<double>(m->GetNCols(), m->GetNRows());
+	dataRet = new Matrix<float>(m->GetNCols(), m->GetNRows());
 
 	ConvertMatrixFormat(m, &M1, &d1);
 	ConvertMatrixFormat(dataRet, &M2, &d2);

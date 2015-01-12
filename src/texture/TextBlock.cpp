@@ -8,8 +8,9 @@ namespace texture {
   using namespace cv;
   using namespace std;
 
-  TextBlock::TextBlock(int p) {
+  TextBlock::TextBlock(int p, int  block_id) {
     coOccType = p;
+    blockId = block_id;
   }
 
   void TextBlock::createFeatures() {

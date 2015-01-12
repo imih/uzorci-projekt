@@ -6,7 +6,6 @@
 #include <opencv2/core/core.hpp>
 
 namespace texture {
-  const int kTexBlockSize = 16;
   const int kColTexBinSize = 16;
   const int kColMax = 255;
 
@@ -14,9 +13,12 @@ namespace texture {
   struct TextBlock {
     //contains all textural features for one block accross 3 color channels
     // for one co-occ type
-    TextBlock(int);
+    TextBlock(int, int);
+    TextBlock();
+
     std::vector<double> getFeatures();
     void addChannel(int, cv::Mat);
+    int blockId;
 
     private:
     Haralick calcHaralick(cv::Mat, int) const;
@@ -33,6 +35,5 @@ namespace texture {
 
     private:
     std::vector<double> f;
-
   };
 }

@@ -11,83 +11,83 @@
 #include "maths.h"
 
 class PLS {
-  Vector<double> *Xmean, *Xstd, *Yorig, *b;
-  Matrix<double> *T, *P, *W, *Wstar;
-  int maxFactors;		// maximum number of factors for this model
+Vector<float> *Xmean, *Xstd, *Yorig, *b;
+Matrix<float> *T, *P, *W, *Wstar;
+int maxFactors;		// maximum number of factors for this model
 
-  // other variables
-  Maths mat;
-  Vector<double> *zdataV;		// variable to hold result of zscore
-
-
-  void normaliz(Vector<double> *vector, Vector<double> *retvector);
-  void MultiplyTransposeMatrixbyVector(Matrix<double> *M, Vector<double> *v, Vector<double> *retvector);
-  void MultiplyMatrixbyVector(Matrix<double> *M, Vector<double> *v, Vector<double> *retvector);
-  double MultiplyVectorTransposedbyVector(Vector<double> *v1, Vector<double> *v2);
-  void MultiplyVectorandScalar(Vector<double> *v, double s, Vector<double> *retvector);
-  void SubtractFromMatrix(Matrix<double> *M, Vector<double> *t, Vector<double> *p);
-  void SubtractFromVector(Vector<double> *v, Vector<double> *t, double c, double bl);
-  void CopyVector(Vector<double> *v, Vector<double> *retvector);
-  void mean(Matrix<double> *M, Vector<double> *retvector) ;
-  void mean(Vector<double> *M, Vector<double> *retvector) ;
-  void std(Matrix<double> *M, Vector<double> *mean, Vector<double> *retvector);
-  void std(Vector<double> *M, Vector<double> *mean, Vector<double> *retvector);
-  void zscore(Matrix<double> *M, Vector<double> *mean, Vector<double> *std);
-  void zscore(Vector<double> *M, Vector<double> *mean, Vector<double> *std);
-  void ComputeWstar();
-
-  // clear data not used for PLS regression (leave only Bstar, Ymean, Xstd, Xmean)
-  void ClearExtraMatricesPLSReg();
-
-  friend class Storage;
+// other variables
+Maths mat;
+Vector<float> *zdataV;		// variable to hold result of zscore
 
 
+	void normaliz(Vector<float> *vector, Vector<float> *retvector);
+	void MultiplyTransposeMatrixbyVector(Matrix<float> *M, Vector<float> *v, Vector<float> *retvector);
+	void MultiplyMatrixbyVector(Matrix<float> *M, Vector<float> *v, Vector<float> *retvector);
+	float MultiplyVectorTransposedbyVector(Vector<float> *v1, Vector<float> *v2);
+	void MultiplyVectorandScalar(Vector<float> *v, float s, Vector<float> *retvector);
+	void SubtractFromMatrix(Matrix<float> *M, Vector<float> *t, Vector<float> *p);
+	void SubtractFromVector(Vector<float> *v, Vector<float> *t, float c, float bl);
+	void CopyVector(Vector<float> *v, Vector<float> *retvector);
+	void mean(Matrix<float> *M, Vector<float> *retvector) ;
+	void mean(Vector<float> *M, Vector<float> *retvector) ;
+	void std(Matrix<float> *M, Vector<float> *mean, Vector<float> *retvector);
+	void std(Vector<float> *M, Vector<float> *mean, Vector<float> *retvector);
+	void zscore(Matrix<float> *M, Vector<float> *mean, Vector<float> *std);
+	void zscore(Vector<float> *M, Vector<float> *mean, Vector<float> *std);
+	void ComputeWstar();
 
-  protected:
+	// clear data not used for PLS regression (leave only Bstar, Ymean, Xstd, Xmean)
+	void ClearExtraMatricesPLSReg();
 
-  // set all matrices initializing with already computed values 
-  // Warning: this function COPY all variables
-  void InitializePLSModel(Vector<double> *Xmean, Vector<double> *Xstd, Vector<double> *Yorig, Vector<double> *b, Matrix<double> *T, 
-      Matrix<double> *P, Matrix<double> *W, Matrix<double> *Wstar);
-
-  // remove matrices not used for projections
-  void ClearExtraMatrices();
-
-  // return projection considering n factors
-  void Projection(double *feat, double *retproj, int nfactors);
-
-  // execute PLS for maximum number of factors: nfactor
-  void runpls(Matrix<double> *X, Vector<double> *Y, int nfactor, char *OutputDir = NULL, double ExplainedX = 1, double ExplainedY = 1);
-
-  // return feature vector running zcore
-  void ExecuteZScore(double *feat, double *zscoreResult);
-
-  // set matrices for PLS
-  void SetMatrices(Matrix<double> *W, Matrix<double> *Wstar, Matrix<double> *P, Vector<double> *Xmean, Vector<double> *Xstd, Vector<double> *b);
+	friend class Storage;
 
 
-  // clear variables of this class
-  void ClearPLS();
+
+protected:
+
+	// set all matrices initializing with already computed values 
+	// Warning: this function COPY all variables
+	void InitializePLSModel(Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *Yorig, Vector<float> *b, Matrix<float> *T, 
+			Matrix<float> *P, Matrix<float> *W, Matrix<float> *Wstar);
+
+	// remove matrices not used for projections
+	void ClearExtraMatrices();
+
+	// return projection considering n factors
+	void Projection(float *feat, float *retproj, int nfactors);
+
+	// execute PLS for maximum number of factors: nfactor
+	void runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDir = NULL, float ExplainedX = 1, float ExplainedY = 1);
+
+	// return feature vector running zcore
+	void ExecuteZScore(float *feat, float *zscoreResult);
+
+	// set matrices for PLS
+	void SetMatrices(Matrix<float> *W, Matrix<float> *Wstar, Matrix<float> *P, Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *b);
 
 
-  // friend classes
-  //friend class Storage;
-  friend class Structures;
+	// clear variables of this class
+	void ClearPLS();
 
-  // Return matrices and vectors
-  Matrix<double> *GetWMatrix() { return W; }
-  Matrix<double> *GetTMatrix() { return T; }
-  Matrix<double> *GetPMatrix() { return P; }
-  Matrix<double> *GetWstar() { return Wstar; }
-  Vector<double> *GetbVector() { return b; }
-  Vector<double> *GetYVector() { return Yorig; }
-  Vector<double> *GetMeanVector() { return Xmean; }
-  Vector<double> *GetStdVector() { return Xstd; }
-  Vector<double> *GetBstar(int nfactors);
 
-  public:
-  PLS();
-  ~PLS();
+	// friend classes
+	//friend class Storage;
+	friend class Structures;
+
+	// Return matrices and vectors
+	Matrix<float> *GetWMatrix() { return W; }
+	Matrix<float> *GetTMatrix() { return T; }
+	Matrix<float> *GetPMatrix() { return P; }
+	Matrix<float> *GetWstar() { return Wstar; }
+	Vector<float> *GetbVector() { return b; }
+	Vector<float> *GetYVector() { return Yorig; }
+	Vector<float> *GetMeanVector() { return Xmean; }
+	Vector<float> *GetStdVector() { return Xstd; }
+	Vector<float> *GetBstar(int nfactors);
+
+public:
+	PLS();
+	~PLS();
 };
 
 

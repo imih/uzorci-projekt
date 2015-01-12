@@ -45,39 +45,46 @@ namespace texture {
   using namespace cv;
   using namespace std;
 
-  vector<TextBlock> getTextBlocks(Mat orgImage, int p) {
-    Mat image;
-    orgImage.copyTo(image);
-    //Mat image = cv::imread(srcImage, 1); //B, G, R
-    cv::cvtColor(image, image, CV_BGR2HSV); //convertinje u hsv
-    Mat m[3];
-    cv::split(image, m); // split image channels to 3 matrices m[0], m[1], m[2]
-
-    //16 bin color bounds values 1....16
-    for(int i = 0; i < m[0].rows; ++i)
-      for(int j = 0; j < m[0].cols; ++j) {
-        for(int k = 0; k < image.channels(); ++k) {
-          double val = (double) m[k].at<unsigned char>(i, j);
-          m[k].at<unsigned char>(i, j) = (unsigned char) min(
-              (int) (val / kColMax * kColTexBinSize) + 1, kColTexBinSize);
-        }
-      }
-
+  vector<TextBlock> getTextBlocks(Mat orgImage, set<int> skippedBlocks) {
+    int block_id = -1;
     vector<TextBlock> texBlocks;
-    // co-occ matrix for channel k on distance d of orientation p
-    for(int i = 0; i < m[0].cols; i += (kTexBlockSize / 2) + 1)  {
-      for(int j = 0; j < m[0].rows; j += (kTexBlockSize / 2) + 1) {
-        TextBlock t(p);
-        for(int k = 0; k < image.channels(); ++k) {
-          int len1 = min(kTexBlockSize, (int) m[k].cols - i);
-          int len2 = min(kTexBlockSize, (int) m[k].rows - j);
-          Mat blockIm(m[k], Rect(i, j, len1, len2));
-          t.addChannel(k, blockIm);
-        }
+    for(int bl_size = 16; bl_size <= 32; bl_size += 16) {
+      for(int p = 0; p < 4; ++p) {
+        Mat image;
+        orgImage.copyTo(image);
+        cv::cvtColor(image, image, CV_BGR2HSV); //convertinje u hsv
+        Mat m[3];
+        cv::split(image, m); // split image channels to 3 matrices m[0], m[1], m[2]
 
-        texBlocks.push_back(t);
+        //16 bin color bounds values 1....16
+        for(int i = 0; i < m[0].rows; ++i)
+          for(int j = 0; j < m[0].cols; ++j) {
+            for(int k = 0; k < image.channels(); ++k) {
+              double val = (double) m[k].at<unsigned char>(i, j);
+              m[k].at<unsigned char>(i, j) = (unsigned char) min(
+                  (int) (val / kColMax * kColTexBinSize) + 1, kColTexBinSize);
+            }
+          }
+
+        // co-occ matrix for channel k on distance d of orientation p
+        for(int i = 0; i < m[0].cols; i += (bl_size / 2) + 1)  { 
+          for(int j = 0; j < m[0].rows; j += (bl_size / 2) + 1) {
+            block_id++;
+            TextBlock t(p, block_id);
+            if(skippedBlocks.count(block_id))
+              continue;
+            for(int k = 0; k < image.channels(); ++k) {
+              int len1 = min(bl_size, (int) m[k].cols - i);
+              int len2 = min(bl_size, (int) m[k].rows - j);
+              Mat blockIm(m[k], Rect(i, j, len1, len2));
+              t.addChannel(k, blockIm);
+            }
+            texBlocks.push_back(t);
+          }
+        }
       }
     }
     return texBlocks;
   }
+
 };

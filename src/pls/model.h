@@ -33,8 +33,8 @@
 class Model : public PLS {
 
 protected:
-	int nfactors; // number of factors outputed for this model
-	int nfeatures;// number of features input in this model
+	int nfactors;							// number of factors outputed for this model
+	int nfeatures;							// number of features input in this model
 
 	// friend classes
 	friend class Storage;
@@ -46,22 +46,25 @@ public:
 	Model(string filename);
 
 	// build PLS model when response variable has only two values (for classification)
-	void CreatePLSModel(Matrix<double> *mPos, Matrix<double> *mNeg, int nfactors);
+	void CreatePLSModel(Matrix<float> *mPos, Matrix<float> *mNeg, int nfactors);
 
 	// build PLS model for any response variable
-	void CreatePLSModel(Matrix<double> *X, Vector<double> *Y, int nfactors);
+	void CreatePLSModel(Matrix<float> *X, Vector<float> *Y, int nfactors);
 
 	// save model to a file
 	void SaveModel(string filename);
 
 	// project feature vector using this model
-	Vector<double> *ProjectFeatureVector(Vector<double> *feat);
+	Vector<float> *ProjectFeatureVector(Vector<float> *feat);
 	
 	// project feature matrix
-	Matrix<double> *ProjectFeatureMatrix(Matrix<double> *featMat);
+	Matrix<float> *ProjectFeatureMatrix(Matrix<float> *featMat);
 
 	// get number of features
 	int GetNumberFeatures() { return nfeatures; } 
 };
+
+
+
 
 #endif

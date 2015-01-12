@@ -44,7 +44,7 @@ CvFileStorage *fs;
 	void InitilizeStoragetoRead(string filename);
 
 	// write data (either matrix or vector)
-	void WriteData(int cols, int rows, double *data, int NumBytes, string name);
+	void WriteData(int cols, int rows, float *data, int NumBytes, string name);
 
 	// read data (either matrix of vector), return number of bytes read
 	int ReadData(char *data, CvFileNode *parentNode);
@@ -60,16 +60,16 @@ public:
 	Storage();
 
 	// write a matrix to cvStorage
-	void WriteMatrix(Matrix<double> *m, string name) { WriteData(m->GetNCols(), m->GetNRows(), m->GetData(), m->GetNumBytes(), name); }
+	void WriteMatrix(Matrix<float> *m, string name) { WriteData(m->GetNCols(), m->GetNRows(), m->GetData(), m->GetNumBytes(), name); }
 
 	// write a vector to cvStorage
-	void WriteVector(Vector<double> *v, string name) { WriteData(v->GetNElements(), 1, v->GetData(), v->GetNumBytes(), name); }
+	void WriteVector(Vector<float> *v, string name) { WriteData(v->GetNElements(), 1, v->GetData(), v->GetNumBytes(), name); }
 
 	// load a matrix from cvStorage
-	Matrix<double> *ReadMatrix(string name, CvFileNode *parentNode);
+	Matrix<float> *ReadMatrix(string name, CvFileNode *parentNode);
 
 	// load a vector from cvStorage
-	Vector<double> *ReadVector(string name, CvFileNode *parentNode);
+	Vector<float> *ReadVector(string name, CvFileNode *parentNode);
 
 	// write a model to cvStorage
 	void WriteModel(string filename, Model *model);
