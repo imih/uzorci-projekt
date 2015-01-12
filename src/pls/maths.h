@@ -38,7 +38,6 @@ template <class T>
 class Vector {
 	T *realp; // real pointer before align
 	T *v;     // data poiter
-	int n;        // number of elements
 
 	// allocate memory for the vector
 	void AllocateMemory(int n) {
@@ -72,10 +71,11 @@ class Vector {
 
 
 public:
+	int n;        // number of elements
 	// Initialize
 	Vector(int n) { AllocateMemory(n); }
 
-	Vector(bool onlyHeader) {
+	Vector() {
 		realp = NULL;
 		v = NULL;
 		n = 0;

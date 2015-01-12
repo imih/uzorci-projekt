@@ -5,6 +5,8 @@
 
 #include <opencv2/core/core.hpp>
 
+#include "../pls/maths.h"
+
 namespace texture {
   const int kColTexBinSize = 16;
   const int kColMax = 255;
@@ -16,7 +18,7 @@ namespace texture {
     TextBlock(int, int);
     TextBlock();
 
-    std::vector<double> getFeatures();
+    Vector<float> getFeatures();
     void addChannel(int, cv::Mat);
     int blockId;
 
@@ -24,16 +26,16 @@ namespace texture {
     Haralick calcHaralick(cv::Mat, int) const;
     void createFeatures(); 
     
-    std::vector<double> f; //Haralick features
+    Vector<float> f; //Haralick features
     std::vector<Haralick> texF;
     int coOccType;
   };
 
   struct Haralick {
     Haralick(cv::Mat);
-    std::vector<double> getFeatures();
+    std::vector<float> getFeatures();
 
     private:
-    std::vector<double> f;
+    std::vector<float> f;
   };
 }

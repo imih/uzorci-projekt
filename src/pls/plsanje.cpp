@@ -37,8 +37,23 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   //calc  rank for each block
   int tblocks = (int) posTex[0].size();
   vector<double> tvip(tblocks, 0);
+  int mt  = (int) posTex[0][0].getFeatures().n;
+  int pnt = (int) posTex.size();
+  int nnt = (int) negTex.size();
   for(int i = 0; i < tblocks; ++i) {
-    //TODO
+    mPos = new Matrix<float>(pnt, mt);
+    for(int j = 0; j < pnt; ++j) {
+      //i-ti blok u j-tom primjeru
+      Vector<float> featureV = posTex[j][i].getFeatures();
+      mPos->SetRow(&featureV, j);
+    }
+
+    mNeg = new Matrix<float>(nnt, mt);
+    for(int j = 0; j < nnt; ++j) {
+      Vector<float> featureV = negTex[j][i].getFeatures();
+      mNeg->SetRow(&featureV, j);
+    }
+
     model.CreatePLSModel(mPos, mNeg, kBlkFactors);
     tvip[i] = getVip(model);
     delete mPos, mNeg;
@@ -46,13 +61,25 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
   int hblocks = (int) posHog[0].size();
   vector<double> hvip(tblocks, 0);
+  int mh = (int) posHog[0][0].f.cols;
+  int pnh = (int) posHog.size();
+  int nnh = (int) negHog.size();
   for(int i = 0; i < hblocks; ++i) {
-    //TODO
+    mPos = new Matrix<float>(pnh, mh);
+    //FILL TODO
+
+
+    mNeg = new Matrix<float>(nnh, mh);
+    //FILL TODO
+
     model.CreatePLSModel(mPos, mNeg , kBlkFactors);
     hvip[i] = getVip(model);
     delete mPos, mNeg;
   }
 
+
+
+  //**************************************************************
   //chose subset of blocks you want to have in the 1st stage using 
   //10-fold cross validation  TODO
   int pt_n = (int) posTex.size() / 10;
