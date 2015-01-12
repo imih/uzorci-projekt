@@ -32,14 +32,13 @@
 
 class Model : public PLS {
 
-protected:
+public:
 	int nfactors;							// number of factors outputed for this model
 	int nfeatures;							// number of features input in this model
 
 	// friend classes
 	friend class Storage;
 
-public:
 	Model();
 
 	// load a stored PLS model

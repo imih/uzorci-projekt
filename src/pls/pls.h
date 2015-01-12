@@ -75,17 +75,17 @@ protected:
 	friend class Structures;
 
 	// Return matrices and vectors
-	Matrix<float> *GetWMatrix() { return W; }
 	Matrix<float> *GetTMatrix() { return T; }
 	Matrix<float> *GetPMatrix() { return P; }
 	Matrix<float> *GetWstar() { return Wstar; }
-	Vector<float> *GetbVector() { return b; }
 	Vector<float> *GetYVector() { return Yorig; }
 	Vector<float> *GetMeanVector() { return Xmean; }
 	Vector<float> *GetStdVector() { return Xstd; }
 	Vector<float> *GetBstar(int nfactors);
 
 public:
+	Matrix<float> *GetWMatrix() { return W; }
+	Vector<float> *GetbVector() { return b; }
 	PLS();
 	~PLS();
 };

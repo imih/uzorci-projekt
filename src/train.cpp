@@ -100,7 +100,8 @@ int main(int argc, char** argv) {
     vector<HOGBlock> hog_features = getHOGFeatures(curWin);
     perBlockPosHog.push_back(hog_features);
     clock_t endPos = clock();
-    printf("%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
+    printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
+        double(endPos - begin) / CLOCKS_PER_SEC);
   }
 
   puts("neg...");
@@ -122,6 +123,7 @@ int main(int argc, char** argv) {
   puts("done loading  features\n");
   clock_t endPos = clock();
   printf("%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
+  waitKey(0);
 
   // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
   set<int> texSkip, hogSkip;
@@ -134,14 +136,9 @@ int main(int argc, char** argv) {
   //2) n_factors - stage 2 TODO
 
   /*
-  //SVM parameters *******************
-  CvSVMParams params;
-  params.svm_type = CvSVM::C_SVC;
-  params.kernel_type = CvSVM::QUADRATIC;
-  params.term_crit = cvTermCriteria(CV_TEMCRIT_ITER, 100, 1e-6);
 
   CvSVM SVM;
-  SVM.train(mpos + mneg,  ypos + yneg, Mat(), Mat(), params);
+  SVM.train_auto(mpos + mneg,  ypos + yneg, Mat(), Mat(), params);
   //write ALL parameters to file
   */
 
