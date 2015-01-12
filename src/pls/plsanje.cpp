@@ -10,6 +10,8 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     vector<vector<HOGBlock> >& posHog, 
     vector<vector<HOGBlock> >& negHog, 
     set<int>& skipHog) {
+  //chose subset of blocks you want to have in the 1st stage using 
+  //10-fold cross validation 
   //TODO
   return;
 }

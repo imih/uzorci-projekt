@@ -125,27 +125,18 @@ int main(int argc, char** argv) {
   // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
   set<int> texSkip, hogSkip;
   // ovo bi trebalo biti na validation setu! TODO
-  puts("Performing per block analysis...\n");
+  puts("Performing per block analysis...\n"); 
   plsPerBlock(perBlockPosTex, perBlockNegTex, texSkip,
      perBlockPosHog, perBlockNegHog, hogSkip);
-
-
-
-
-
-
+  //cross validate:
+  //1) n_factors - stage 1
+  //2) n_factors - stage 2 TODO
 
   /*
-  //neg texture
-  Matrix<double> *mneg = 
-  //pls on texture features
-  //get hog 
-  //pls on hog
-
   //SVM parameters *******************
   CvSVMParams params;
   params.svm_type = CvSVM::C_SVC;
-  params.kernel_type = CvSVM::LINEAR;
+  params.kernel_type = CvSVM::QUADRATIC;
   params.term_crit = cvTermCriteria(CV_TEMCRIT_ITER, 100, 1e-6);
 
   CvSVM SVM;
