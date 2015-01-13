@@ -8,24 +8,10 @@ namespace texture {
   TextBlock::TextBlock(int p, int block_id) {
     coOccType = p;
     blockId = block_id;
+    idx = 0;
   }
 
-  void TextBlock::createFeatures() {
-    if(f.n) return;
-    f = Vector<float>((int) texF.size());
-    for(int i = 0; i < texF.size(); ++i) {
-      f.SetElement(i, texF[i]);
-    }
-    texF.clear();
-  }
-
-  Vector<float> TextBlock::getFeatures() {
-    if(!f.n)
-      createFeatures();
-    return f;
-  }
-
-  vector<float> TextBlock::calcHaralick(Mat& blockIm, int d = 1) {
+  void TextBlock::addFeatures(cv::Mat& blockIm) {
     const int dx[] = {0, -1, -1,  1}; //P0, P90, P45, P135
     const int dy[] = {1,  0,  1, -1};
 
@@ -36,6 +22,7 @@ namespace texture {
 
     int r = blockIm.rows;
     int c = blockIm.cols;
+    int d = 1;
     for(int i = 0; i < r; ++i) {
       int x = i + d * dx[coOccType];
       if(x < 0 || x >= r) 
@@ -66,7 +53,7 @@ namespace texture {
     Mat pxpy = Mat::zeros(1, 2 * ng + 1, CV_32F);
     Mat pxmy = Mat::zeros(1, ng, CV_32F);
 
-    vector<float> f = vector<float>(13);
+    vector<float> f_ = vector<float>(13);
     for(int i = 1; i <= ng; ++i) {
       for(int j = 1; j <= ng; ++j) {
         p.at<float>(i, j) /= R;
@@ -74,17 +61,17 @@ namespace texture {
         py.at<float>(0, j) += p.at<float>(i, j);
         pxpy.at<float>(0, i + j) +=  p.at<float>(i, j);
         pxmy.at<float>(0, abs(i -j)) += p.at<float>(i, j);
-        f[0] += (p.at<float>(i, j) * p.at<float>(i, j));
-        f[2] += (p.at<float>(i, j) * i * j);
-        f[4] += (p.at<float>(i, j) / (1 + (i - j) * (i - j)));
-        f[8] -= (p.at<float>(i, j) * log(p.at<float>(i, j)));
+        f_[0] += (p.at<float>(i, j) * p.at<float>(i, j));
+        f_[2] += (p.at<float>(i, j) * i * j);
+        f_[4] += (p.at<float>(i, j) / (1 + (i - j) * (i - j)));
+        f_[8] -= (p.at<float>(i, j) * log(p.at<float>(i, j)));
       }
     }
 
     float mean_val = mean(p)[0];
     float hx = 0, hy = 0;
     for(int i = 1; i <= ng; ++i) {
-      f[3] += (px.at<float>(0, i) * (i - mean_val));
+      f_[3] += (px.at<float>(0, i) * (i - mean_val));
       hx += (px.at<float>(0, i) * log(px.at<float>(0, i)));
       hy += (py.at<float>(0, i) * log(py.at<float>(0, i)));
     }
@@ -92,23 +79,23 @@ namespace texture {
     cv::Scalar sigmax, sigmay, mix, miy;
     meanStdDev(px, mix, sigmax);
     meanStdDev(py, miy, sigmay);
-    f[2] = (f[2] - mix[0] * miy[0]) / (sigmax[0] * sigmay[0]);
+    f_[2] = (f_[2] - mix[0] * miy[0]) / (sigmax[0] * sigmay[0]);
 
     float meanpxmy = mean(pxmy)[0];
     for(int k = 0; k <= ng - 1; ++k) {
-      f[1] += (pxmy.at<float>(0, k) * k * k);
-      f[9] += ((pxmy.at<float>(0, k) - meanpxmy) * (pxmy.at<float>(0, k) - meanpxmy));
-      f[10] -= (pxmy.at<float>(0, k) * log(pxmy.at<float>(0, k)));
+      f_[1] += (pxmy.at<float>(0, k) * k * k);
+      f_[9] += ((pxmy.at<float>(0, k) - meanpxmy) * (pxmy.at<float>(0, k) - meanpxmy));
+      f_[10] -= (pxmy.at<float>(0, k) * log(pxmy.at<float>(0, k)));
     }
-    f[9]  /= ng;
+    f_[9]  /= ng;
 
     for(int i = 2; i <= 2 * ng; ++i) {
-      f[5] += (pxpy.at<float>(0, i) * i);
-      f[7] -= (pxpy.at<float>(0, i) * log(pxpy.at<float>(0, i)));
+      f_[5] += (pxpy.at<float>(0, i) * i);
+      f_[7] -= (pxpy.at<float>(0, i) * log(pxpy.at<float>(0, i)));
     }
 
     for(int i = 2; i <= 2 * ng; ++i) {
-      f[6] += ((i - f[7]) * (i - f[7]) * pxpy.at<float>(0, i));
+      f_[6] += ((i - f_[7]) * (i - f_[7]) * pxpy.at<float>(0, i));
     }
 
     float hxy1 = 0, hxy2 = 0;
@@ -120,16 +107,14 @@ namespace texture {
               px.at<float>(0, i) * py.at<float>(0, j)));
       }
 
-    f[11] = (f[8] - hxy1) / max(hx, hy);
-    f[12] = sqrt(1 - exp(-2 * hxy2 - f[8]));
-    return f;
-  }
+    f_[11] = (f_[8] - hxy1) / max(hx, hy);
+    f_[12] = sqrt(1 - exp(-2 * hxy2 - f_[8]));
 
-  void TextBlock::addChannel(int k, cv::Mat& blockIm) {
-    //for channel k make co-occur for every dist d
-    vector<float> curH = calcHaralick(blockIm);
-    texF.insert(texF.end(), curH.begin(), curH.end());
+    if(f.n == 0)
+      f = Vector<float>(3 * (int) f_.size());
+    for(int i = 0; i < (int) f_.size(); ++i)
+      f.SetElement(idx + i, f_[i]);
+    idx += (int) f_.size();
   }
-
 }
 

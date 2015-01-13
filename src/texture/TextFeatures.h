@@ -6,5 +6,5 @@
 #include <set>
 
 namespace texture {
-  std::vector<texture::TextBlock> getTextBlocks(cv::Mat, std::set<int> = std::set<int>());
+  void getTextBlocks(cv::Mat, std::vector<TextBlock>&, std::set<int> = std::set<int>());
 };

@@ -37,20 +37,20 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   //calc  rank for each block
   int tblocks = (int) posTex[0].size();
   vector<double> tvip(tblocks, 0);
-  int mt  = (int) posTex[0][0].getFeatures().n;
+  int mt  = (int) posTex[0][0].f.n;
   int pnt = (int) posTex.size();
   int nnt = (int) negTex.size();
   for(int i = 0; i < tblocks; ++i) {
     mPos = new Matrix<float>(pnt, mt);
     for(int j = 0; j < pnt; ++j) {
       //i-ti blok u j-tom primjeru
-      Vector<float> featureV = posTex[j][i].getFeatures();
+      Vector<float> featureV = posTex[j][i].f;
       mPos->SetRow(&featureV, j);
     }
 
     mNeg = new Matrix<float>(nnt, mt);
     for(int j = 0; j < nnt; ++j) {
-      Vector<float> featureV = negTex[j][i].getFeatures();
+      Vector<float> featureV = negTex[j][i].f;
       mNeg->SetRow(&featureV, j);
     }
 

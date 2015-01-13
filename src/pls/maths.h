@@ -1,27 +1,27 @@
 /* 
-   http://www.liv.ic.unicamp.br/~wschwartz/softwares.html
+http://www.liv.ic.unicamp.br/~wschwartz/softwares.html
 
-   Copyright (C) 2010-2011 William R. Schwartz
+Copyright (C) 2010-2011 William R. Schwartz
 
-   This source code is provided 'as-is', without any express or implied
-   warranty. In no event will the author be held liable for any damages
-   arising from the use of this software.
+This source code is provided 'as-is', without any express or implied
+warranty. In no event will the author be held liable for any damages
+arising from the use of this software.
 
-   Permission is granted to anyone to use this software for any purpose,
-   including commercial applications, and to alter it and redistribute it
-   freely, subject to the following restrictions:
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-   1. The origin of this source code must not be misrepresented; you must not
-      claim that you wrote the original source code. If you use this source code
-      in a product, an acknowledgment in the product documentation would be
-      appreciated but is not required.
+1. The origin of this source code must not be misrepresented; you must not
+claim that you wrote the original source code. If you use this source code
+in a product, an acknowledgment in the product documentation would be
+appreciated but is not required.
 
-   2. Altered source versions must be plainly marked as such, and must not be
-      misrepresented as being the original source code.
+2. Altered source versions must be plainly marked as such, and must not be
+misrepresented as being the original source code.
 
-   3. This notice may not be removed or altered from any source distribution.
+3. This notice may not be removed or altered from any source distribution.
 
-   William R. Schwartz williamrobschwartz [at] gmail.com
+William R. Schwartz williamrobschwartz [at] gmail.com
 */
 #ifndef MATHS_H
 #define MATHS_H
@@ -36,143 +36,140 @@
 //////////////////
 template <class T>
 class Vector {
-	T *realp; // real pointer before align
-	T *v;     // data poiter
+  T *realp; // real pointer before align
+  T *v;     // data poiter
 
-	// allocate memory for the vector
-	void AllocateMemory(int n) {
-		CV_FUNCNAME("Vector::AllocateMemory");
+  // allocate memory for the vector
+  void AllocateMemory(int n) {
+    CV_FUNCNAME("Vector::AllocateMemory");
 
-		realp = new T[n];
-		if (realp == NULL)
-			DET_ERROR("No available memory to allocate vector");
+    realp = new T[n];
+    if (realp == NULL)
+      DET_ERROR("No available memory to allocate vector");
 
-		memset(realp, 0, sizeof(T) * n);
-		v = realp;
-		this->n = n;
-		// if change here, check setData function
-	}
-
-
-	void LoadVector(char *filename) {
-		FILE *f;
-		int c, r;
-
-		f = fopen(filename, "rb");
-		fread(&r, sizeof(int), 1, f);
-		fread(&c, sizeof(int), 1, f);
-		AllocateMemory(max(r,c));
-	
-		fread(v, sizeof(T), max(r,c), f);
-
-		fclose(f);
-	}
+    memset(realp, 0, sizeof(T) * n);
+    v = realp;
+    this->n = n;
+    // if change here, check setData function
+  }
 
 
-public:
-	int n;        // number of elements
-	// Initialize
-	Vector(int n) { AllocateMemory(n); }
+  void LoadVector(char *filename) {
+    FILE *f;
+    int c, r;
 
-	Vector() {
-		realp = NULL;
-		v = NULL;
-		n = 0;
-	}
+    f = fopen(filename, "rb");
+    fread(&r, sizeof(int), 1, f);
+    fread(&c, sizeof(int), 1, f);
+    AllocateMemory(max(r,c));
 
-	Vector(string filename) { LoadVector((char *)filename.c_str()); }
+    fread(v, sizeof(T), max(r,c), f);
 
-	// load a vector
-	Vector(char *filename) { LoadVector(filename); }
-
-	// release structures
-        ~Vector() {
-//        if(realp != NULL)
-//           delete realp;
-          realp = NULL;
-          v = NULL;
-          n = 0;
-        }
-
-        // return number of bytes used for this vector
-        int GetNumBytes() { return n * sizeof(T); }
+    fclose(f);
+  }
 
 
-        // retrieve element at row y and column x
-        inline T GetElement(int x) { return v[x]; }
-        inline T operator[](int x) { return v[x]; }
+  public:
+  int n;        // number of elements
+  // Initialize
+  Vector(int n) { AllocateMemory(n); }
+
+  Vector() {
+    realp = NULL;
+    v = NULL;
+    n = 0;
+  }
+
+  Vector(string filename) { LoadVector((char *)filename.c_str()); }
+
+  // load a vector
+  Vector(char *filename) { LoadVector(filename); }
+
+  // release structures
+  ~Vector() {
+    //        if(realp != NULL)
+    //           delete realp;
+  }
+
+  // return number of bytes used for this vector
+  int GetNumBytes() { return n * sizeof(T); }
 
 
-        // set value
-        inline void SetElement(int x, T value) { v[x] = value; }
+  // retrieve element at row y and column x
+  inline T GetElement(int x) { return v[x]; }
+  inline T operator[](int x) { return v[x]; }
 
 
-        // set n elements from p with value 
-        void SetRangeElements(int p, int n, T value) {
-          int i;
+  // set value
+  inline void SetElement(int x, T value) { v[x] = value; }
 
-          for (i = p; i < n + p; i++)
-            SetElement(i, value);
-        }
 
-        // retrieve matrix pointer
-        inline T *GetData() { return v; }
+  // set n elements from p with value 
+  void SetRangeElements(int p, int n, T value) {
+    int i;
 
-        // retrive number of elements
-        inline int GetNElements() { return n; }
+    for (i = p; i < n + p; i++)
+      SetElement(i, value);
+  }
 
-        // reset elements of vector
-        inline void ResetVector() { memset(v, 0, sizeof(T) * n);  }
+  // retrieve matrix pointer
+  inline T *GetData() { return v; }
 
-        // select elements from the vector
-        inline Vector<T> *SelectElements(vector<int> *selectedElems) {
-          Vector<T> *sv;
-          int i;
+  // retrive number of elements
+  inline int GetNElements() { return n; }
 
-          sv = new Vector<T>((int)selectedElems->size());
-          for (i = 0; i < sv->GetNElements(); i++) {
-            sv->SetElement(i, v[selectedElems->at(i)]);
-          }
+  // reset elements of vector
+  inline void ResetVector() { memset(v, 0, sizeof(T) * n);  }
 
-          return sv;
-        }
+  // select elements from the vector
+  inline Vector<T> *SelectElements(vector<int> *selectedElems) {
+    Vector<T> *sv;
+    int i;
+
+    sv = new Vector<T>((int)selectedElems->size());
+    for (i = 0; i < sv->GetNElements(); i++) {
+      sv->SetElement(i, v[selectedElems->at(i)]);
+    }
+
+    return sv;
+  }
 
 
 
 
-        // write vector
-        void Write(char *filename) {
-          int i;
-          FILE *f;
-          T value;
+  // write vector
+  void Write(char *filename) {
+    int i;
+    FILE *f;
+    T value;
 
-          f = fopen(filename, "wb");
-          // header
-          i = 1;
-          fwrite(&i, 1, sizeof(int), f);
-          fwrite(&n, 1, sizeof(int), f);
+    f = fopen(filename, "wb");
+    // header
+    i = 1;
+    fwrite(&i, 1, sizeof(int), f);
+    fwrite(&n, 1, sizeof(int), f);
 
-          // data
-          for (i = 0; i < n; i++) {
-            value = GetElement(i);
-            fwrite(&value, 1, sizeof(T), f);
-          }
+    // data
+    for (i = 0; i < n; i++) {
+      value = GetElement(i);
+      fwrite(&value, 1, sizeof(T), f);
+    }
 
-          fclose(f);
-        }
+    fclose(f);
+  }
 
-        // copy this vector to a new one
-        Vector *Copy() { 
-          Vector<T> *v1; 
-          T *data;
-          v1 = new Vector<T>(n);
-          data = v1->GetData();
-          memcpy(data, this->GetData(), sizeof(T) * n);
-          return v1;
-        }
+  // copy this vector to a new one
+  Vector *Copy() { 
+    Vector<T> *v1; 
+    T *data;
+    v1 = new Vector<T>(n);
+    data = v1->GetData();
+    memcpy(data, this->GetData(), sizeof(T) * n);
+    return v1;
+  }
 
 
-        void Write(string filename) { Write((char *) filename.c_str()); }
+  void Write(string filename) { Write((char *) filename.c_str()); }
 };
 
 
@@ -238,7 +235,7 @@ class Matrix { // matrix is column based
   // clear structures
   ~Matrix() { 
     if(realp) {
-    delete this->realp; 
+      delete this->realp; 
     }
     this->realp = NULL;
     this->m = NULL;

@@ -19,17 +19,13 @@ namespace texture {
     TextBlock(int, int);
     TextBlock();
 
-    Vector<float> getFeatures();
-    void addChannel(int, cv::Mat&);
+    void addFeatures(cv::Mat&);
 
+    Vector<float> f; //Haralick features
     int blockId;
 
     private:
-    vector<float> calcHaralick(cv::Mat&, int);
-    void createFeatures(); 
-    
-    vector<float> texF;
-    Vector<float> f; //Haralick features
+    int idx;
     int coOccType;
   };
 };

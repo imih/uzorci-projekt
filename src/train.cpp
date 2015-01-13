@@ -75,7 +75,9 @@ void getTrainingSet() {
 }
 
 vector<TextBlock > getTextFeatures(Mat image) {
-  return getTextBlocks(image);
+  vector<TextBlock> ret;
+  getTextBlocks(image, ret);
+  return ret;
 }
 
 vector<HOGBlock> getHOGFeatures(Mat image) {
