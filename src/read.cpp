@@ -40,7 +40,7 @@ void writeFile(vector<vector<T> >& v, string fileName) {
     for(int j = 0; j < blocks; ++j) {
       vector<string> f;
       for(int k = 0; k < v[i][j].f.n; ++k) {
-        f.push_back((boost::format("%lf.10") % v[i][j].f.GetElement(k)).str());
+        f.push_back((boost::format("%.10lf") % v[i][j].f.GetElement(k)).str());
       }
       feats.push_back(join(f, " "));
     }
