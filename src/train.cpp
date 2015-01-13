@@ -19,6 +19,8 @@
 #include "hogcolor/HOGAndColorFeatures.h"
 #include "pls/plsanje.h"
 
+#include "read.h"
+
 using namespace texture;
 using namespace hog;
 using namespace std;
@@ -87,7 +89,10 @@ int main(int argc, char** argv) {
   clock_t begin = clock();
 
   if(readFeatFromFile) {
-    //read vectors from file TODO
+    readTex(perBlockPosTex, 1);
+    readHog(perBlockPosHog, 1);
+    readTex(perBlockNegTex, 0);
+    readHog(perBlockNegHog, 0);
   } else {
     getTrainingSet();
     for(int im = 0; im < (int) posImNodes.size(); ++im) {
@@ -98,7 +103,11 @@ int main(int argc, char** argv) {
       printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
           double(endPos - begin) / CLOCKS_PER_SEC);
     }
-    posImNodes.clear();
+
+    if(writeFeatToFile) {
+      writeTex(perBlockPosTex, 1);
+      writeHog(perBlockPosHog, 1);
+    }
 
     puts("neg...");
     int w = 0;
@@ -117,7 +126,10 @@ int main(int argc, char** argv) {
           if(w > negSampleSize) break;
         } 
     }
-    negImNodes.clear();
+    if(writeFeatToFile) {
+      writeTex(perBlockPosTex, 0);
+      writeHog(perBlockPosHog, 0);
+    }
   }
 
   puts("done loading  features\n");
