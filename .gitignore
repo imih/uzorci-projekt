@@ -4,3 +4,5 @@ CMakeFiles*
 Makefile
 *.cmake
 dataset/
+train
+*.swo

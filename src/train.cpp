@@ -34,7 +34,6 @@ const int colWin = 64;
 const int rowWin = 128;
 
 struct ImNode {
-  Mat image;
   string fileName;
   ImNode(string name) {
     fileName = name;
@@ -60,18 +59,6 @@ void getTrainingSet() {
   }
   negList.close();
   printf("Read %d neg window samples\n", (int) negImNodes.size()); 
-  puts("Loading images...");
-  clock_t begin = clock();
-  for(int i = 0; i < (int) posImNodes.size(); ++i) {
-    posImNodes[i].image = cv::imread(posImNodes[i].fileName, 1); //BGR
-    assert(posImNodes[i].image.rows > 0);
-  }
-  for(int i = 0; i < (int) negImNodes.size(); ++i) {
-    negImNodes[i].image = cv::imread(negImNodes[i].fileName, 1); //BGR
-    assert(negImNodes[i].image.rows > 0);
-  }
-  clock_t end = clock();
-  printf("%0.3lfs\n", double(end - begin) / CLOCKS_PER_SEC);
 }
 
 vector<TextBlock > getTextFeatures(Mat image) {
@@ -96,7 +83,7 @@ int main(int argc, char** argv) {
   clock_t begin = clock();
 
   for(int im = 0; im < (int) posImNodes.size(); ++im) {
-    Mat curWin = posImNodes[im].image;
+    Mat curWin = cv::imread(posImNodes[im].fileName, 1); //BGR
     perBlockPosTex.push_back(getTextFeatures(curWin));
     perBlockPosHog.push_back(getHOGFeatures(curWin)); 
     clock_t endPos = clock();
@@ -108,16 +95,18 @@ int main(int argc, char** argv) {
   puts("neg...");
   vector<vector<TextBlock> > perBlockNegTex;
   vector<vector<HOGBlock> > perBlockNegHog;
-  for(int im = 0; im < (int) negImNodes.size(); ++im) 
-    for(int i = 0; i + rowWin <= negImNodes[im].image.rows; i += rowWin) 
-      for(int j = 0; j + colWin <= negImNodes[im].image.cols; j += colWin) {
+  for(int im = 0; im < (int) negImNodes.size(); ++im) {
+    Mat image = cv::imread(negImNodes[im].fileName, 1); //BGR
+    for(int i = 0; i + rowWin <= image.rows; i += rowWin) 
+      for(int j = 0; j + colWin <= image.cols; j += colWin) {
         // mozemo extraktat vise negativnih primjera! TODO
-        Mat curWin = Mat(negImNodes[im].image, Rect(j, i, colWin, rowWin));
+        Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
         perBlockNegTex.push_back(getTextFeatures(curWin));
         perBlockNegHog.push_back(getHOGFeatures(curWin));
         clock_t endPos = clock();
         printf("%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
       } 
+  }
   negImNodes.clear();
 
   puts("done loading  features\n");
