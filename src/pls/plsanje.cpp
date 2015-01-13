@@ -12,6 +12,7 @@ using hog::HOGBlock;
 using std::random_shuffle;
 using std::sort;
 using cv::Mat;
+using std::pair;
 
 double getVip(Model& model) { double ret1 = 0, ret2 = 0;
   Matrix<float>* W = model.GetWMatrix();
@@ -36,17 +37,85 @@ bool cmpHogBlock(const HOGBlock& a, const HOGBlock& b) {
   return hvip[a.block_id] > hvip[b.block_id];
 }
 
+vector<pair<char, int> > allBlocks;
+double getVal(const pair<char, int>& a) {
+  if(a.first == 't')
+    return tvip[a.second];
+  else return hvip[a.second];
+}
+
+bool cmpAllBlocks(const pair<char, int>& a, const pair<char, int>& b) {
+  double v1 = getVal(a);
+  double v2 = getVal(b);
+  return v1 >= v2;
+}
+
+vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block) {
+  //TODO
+  vector<float> ret;
+  return ret;
+}
+
 const int kBlkFactors = 16;
 
-vector<int> pos_ids, neg_ids;
+vector<int> sample_ids; 
+int last;
 void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int block, 
     int k, vector<vector<TextBlock> >& posTex, vector<vector<TextBlock> >& negTex, 
     vector<vector<HOGBlock> >& posHog, vector<vector<HOGBlock> >& negHog) {
-  //create  validation and training set TODO
+  if(!k) last = 0;
+
+  int N = (int) sample_ids.size();
+  int Nval = N / 10 + (k + 1 <= N % 10);
+  int Ntr = N - Nval;
+  int features = 0;
+  for(int i = 0; i < block; ++i) {
+    features += (allBlocks[i].first == 't' ? posTex[0][0].f.n : posHog[0][0].f.n);
+  }
+
+  valRes = Mat(Nval, 1, CV_32F);
+  trainRes = Mat(Ntr, 1, CV_32F);
+  trainData = Mat(Ntr, features, CV_32F);
+  valData = Mat(Nval, features, CV_32F);
+
+  int val_id = 0;
+  int train_id = 0;
+  for(int i = 0; i < N; ++i) {
+    int cur_id = sample_ids[i];
+    int& cur_val = train_id;
+    Mat& curResp = trainRes;
+    Mat& curData = trainData;
+
+    if(i >= last && (k < last + Nval)) {
+      //update validation set
+      cur_val = val_id;
+      curResp = valRes;
+      curData = valData;
+    }
+
+    vector<float> allFeatures;
+    if(cur_id >= 0) {
+      curResp.at<float>(cur_val, 0) = 1;
+      allFeatures = getFeats(posTex[cur_id], posHog[cur_id], block);
+    } else {
+      curResp.at<float>(cur_val, 0) = 0;
+      cur_id = - cur_id - 1;
+      allFeatures = getFeats(negTex[cur_id], negHog[cur_id], block);
+    }
+
+    assert((int) allFeatures.size() == features);
+    //update cur_val row  of curData with features allFeatures
+    for(int i = 0; i < features; ++i) {
+      curData.at<float>(cur_val, i) = allFeatures[i];
+    }
+    cur_val++;
+  }
+
+  last += Nval;
 }
 
 float errCnt(Mat& h, Mat& y) {
-  //TODO
+  //jednostupcane matrice TODO
   return 0;
 }
 
@@ -103,29 +172,33 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   }
 
   //**************************************************************
-
   //sort every row by vip score
-  for(int i = 0; i < pnt; ++i) 
+  for(int i = 0; i < pnt; ++i)
     sort(posTex[i].begin(), posTex[i].end(), cmpTexBlock);
   for(int i = 0; i < nnt; ++i) 
     sort(negTex[i].begin(), negTex[i].end(), cmpTexBlock);
-  for(int i = 0; i < pnh; ++i) 
+  for(int i = 0; i < pnh; ++i)
     sort(posHog[i].begin(), posHog[i].end(), cmpHogBlock);
   for(int i = 0; i < nnh; ++i)
     sort(negHog[i].begin(), negHog[i].end(), cmpHogBlock);
 
+  for(int i = 0; i < posTex[0].size(); ++i) 
+    allBlocks.push_back(make_pair('t', i));
+  for(int i = 0; i < posHog[0].size(); ++i)
+    allBlocks.push_back(make_pair('h', i));
+  sort(allBlocks.begin(), allBlocks.end(), cmpAllBlocks);
+
   //randomize 
   std::srand((unsigned) time(NULL));
   for(int i = 0; i < (int) posTex.size(); ++i) {
-    pos_ids.push_back(i);
+    sample_ids.push_back(i);
   }
 
   for(int i = 0; i < (int) negTex.size(); ++i) {
-    neg_ids.push_back(i);
+    sample_ids.push_back(-i - 1);
   }
 
-  random_shuffle(pos_ids.begin(), pos_ids.end());
-  random_shuffle(neg_ids.begin(), neg_ids.end());
+  random_shuffle(sample_ids.begin(), sample_ids.end());
 
   CvSVMParams svmparams;
   svmparams.svm_type = CvSVM::C_SVC;
@@ -143,7 +216,6 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     //10-fold cross validation  
     //ajmo prvo bez pls (ostatak TODO )
     for(int i = 0; i < 8; ++i) {
-      // train and validate TODO
       Mat trainData, trainRes, valData, valRes, valH;
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
           posTex, negTex, posHog, negHog);
@@ -156,18 +228,13 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
   int bestBlock = posBlockSizes[max_element(avgScore.begin(), avgScore.end()) 
     - avgScore.begin()];
-  int t = 0, h = 0;
   chosenT.clear();
   chosenH.clear();
   for(int i = 0; i < bestBlock; ++i) {
-    int tid = posTex[0][t].block_id;
-    int hid = posHog[0][h].block_id;
-    if(tvip[tid] < hvip[hid]) {
-      chosenH.insert(hid);
-      h++;
+    if(allBlocks[i].first == 'h') {
+      chosenH.insert(allBlocks[i].second);
     } else {
-      chosenT.insert(tid);
-      t++;
+      chosenT.insert(allBlocks[i].second);
     }
   }
 

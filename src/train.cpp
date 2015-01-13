@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
     readHog(perBlockNegHog, 0);
   } else {
     getTrainingSet();
+    /*
     for(int im = 0; im < (int) posImNodes.size(); ++im) {
       Mat curWin = cv::imread(posImNodes[im].fileName, 1); //BGR
       perBlockPosTex.push_back(getTextFeatures(curWin));
@@ -101,29 +102,29 @@ int main(int argc, char** argv) {
 
     if(writeFeatToFile) {
       writeTex(perBlockPosTex, 1);
-      //writeHog(perBlockPosHog, 1);
+      writeHog(perBlockPosHog, 1);
     }
+    */
 
     puts("neg...");
     int w = 0;
-    for(int im = 0; im < (int) negImNodes.size(); ++im) {
+    for(int im = 0; (im < (int) negImNodes.size()) && (w <= negSampleSize); ++im) {
       Mat image = cv::imread(negImNodes[im].fileName, 1); //BGR
-      for(int i = 0; i + rowWin <= image.rows; i += rowWin) 
-        for(int j = 0; j + colWin <= image.cols; j += colWin) {
+      for(int i = 0; (i + rowWin <= image.rows) && (w <= negSampleSize); i += rowWin) 
+        for(int j = 0; (j + colWin <= image.cols) && (w <= negSampleSize); j += colWin) {
           w++;
           // mozemo extraktat vise negativnih primjera! TODO
           Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
           perBlockNegTex.push_back(getTextFeatures(curWin));
-          perBlockNegHog.push_back(getHOGFeatures(curWin));
+        //  perBlockNegHog.push_back(getHOGFeatures(curWin));
           clock_t endPos = clock();
           printf("%d/%d t:%0.3lfs\n", w, negSampleSize, 
               double(endPos - begin) / CLOCKS_PER_SEC);
-          if(w > negSampleSize) break;
         } 
     }
     if(writeFeatToFile) {
-      writeTex(perBlockPosTex, 0);
-      writeHog(perBlockPosHog, 0);
+      writeTex(perBlockNegTex, 0);
+      //writeHog(perBlockNegHog, 0);
     }
   }
 
