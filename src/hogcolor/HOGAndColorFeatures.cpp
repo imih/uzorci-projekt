@@ -45,7 +45,7 @@ namespace hog {
     }
   }
 
-  void calc_hog_and_color(Mat *grad, Vector<float> &features) {
+  void calc_hog_and_color(Mat *grad, Vector<float>& features) {
     Mat planes[ANGLE_CNT][3];
 
     for (int i = 0; i < ANGLE_CNT; ++i)
@@ -57,7 +57,6 @@ namespace hog {
     int r = grad[0].rows;
     int c = grad[0].cols;
 
-    features = Vector<float>(3 * (ANGLE_BIN_CNT + 1));
     for (int i = 0; i < r; ++i) {
       for (int j = 0; j < c; ++j) {
         vector< float > square_norms(3);
@@ -86,6 +85,7 @@ namespace hog {
     }
 
     int f_pos = 0;
+    features = Vector<float>(3 * (ANGLE_BIN_CNT + 1));
     for(int ch = 0; ch < 3; ++ch) {
       for(int i = 0; i < ANGLE_BIN_CNT; ++i) {
         features.SetElement(f_pos, angle_hist[ch][i]);
@@ -145,7 +145,7 @@ namespace hog {
 
           Vector<float> feature_vector; 
           calc_hog_and_color(blk_grad, feature_vector);
-          feature_vectors.push_back(HOGBlock(feature_vector, block_id++));
+          feature_vectors.push_back(HOGBlock(feature_vector, block_id));
         }
       }
     }

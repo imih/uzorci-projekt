@@ -95,14 +95,13 @@ int main(int argc, char** argv) {
 
   for(int im = 0; im < (int) posImNodes.size(); ++im) {
     Mat curWin = posImNodes[im].image;
-    vector<TextBlock> tex_features = getTextFeatures(curWin);
-    perBlockPosTex.push_back(tex_features);
-    vector<HOGBlock> hog_features = getHOGFeatures(curWin);
-    perBlockPosHog.push_back(hog_features);
+    perBlockPosTex.push_back(getTextFeatures(curWin));
+    perBlockPosHog.push_back(getHOGFeatures(curWin)); 
     clock_t endPos = clock();
     printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
         double(endPos - begin) / CLOCKS_PER_SEC);
   }
+  posImNodes.clear();
 
   puts("neg...");
   vector<vector<TextBlock> > perBlockNegTex;
@@ -112,13 +111,12 @@ int main(int argc, char** argv) {
       for(int j = 0; j + colWin <= negImNodes[im].image.cols; j += colWin) {
         // mozemo extraktat vise negativnih primjera! TODO
         Mat curWin = Mat(negImNodes[im].image, Rect(j, i, colWin, rowWin));
-        vector<TextBlock> tex_features = getTextFeatures(curWin);
-        perBlockNegTex.push_back(tex_features);
-        vector<HOGBlock> hog_features = getHOGFeatures(curWin);
-        perBlockNegHog.push_back(hog_features);
+        perBlockNegTex.push_back(getTextFeatures(curWin));
+        perBlockNegHog.push_back(getHOGFeatures(curWin));
         clock_t endPos = clock();
         printf("%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
       } 
+  negImNodes.clear();
 
   puts("done loading  features\n");
   clock_t endPos = clock();
