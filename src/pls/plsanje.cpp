@@ -38,6 +38,7 @@ bool cmpHogBlock(const HOGBlock& a, const HOGBlock& b) {
 
 const int kBlkFactors = 16;
 
+vector<int> pos_ids, neg_ids;
 void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int block, 
     int k, vector<vector<TextBlock> >& posTex, vector<vector<TextBlock> >& negTex, 
     vector<vector<HOGBlock> >& posHog, vector<vector<HOGBlock> >& negHog) {
@@ -102,12 +103,6 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   }
 
   //**************************************************************
-  //chose subset of blocks you want to have in the 1st stage using 
-  //10-fold cross validation  
-  int pt_n = (int) posTex.size() / 10;
-  int nt_n = (int) negTex.size() / 10;
-  int ph_n = (int) posHog.size() / 10;
-  int nh_n = (int) negHog.size() / 10;
 
   //sort every row by vip score
   for(int i = 0; i < pnt; ++i) 
@@ -119,13 +114,18 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   for(int i = 0; i < nnh; ++i)
     sort(negHog[i].begin(), negHog[i].end(), cmpHogBlock);
 
-  /*
-     std::srand((unsigned) time(NULL));
-     random_shuffle(posTex.begin(), posTex.end());
-     random_shuffle(negTex.begin(), negTex.end());
-     random_shuffle(posHog.begin(), posHog.end());
-     random_shuffle(negHog.begin(), negHog.end());
-     */
+  //randomize 
+  std::srand((unsigned) time(NULL));
+  for(int i = 0; i < (int) posTex.size(); ++i) {
+    pos_ids.push_back(i);
+  }
+
+  for(int i = 0; i < (int) negTex.size(); ++i) {
+    neg_ids.push_back(i);
+  }
+
+  random_shuffle(pos_ids.begin(), pos_ids.end());
+  random_shuffle(neg_ids.begin(), neg_ids.end());
 
   CvSVMParams svmparams;
   svmparams.svm_type = CvSVM::C_SVC;
@@ -139,6 +139,8 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   vector<double> avgScore(8, 0);
 
   for(int k = 0; k < 10; ++k) {
+    //chose subset of blocks you want to have in the 1st stage using 
+    //10-fold cross validation  
     //ajmo prvo bez pls (ostatak TODO )
     for(int i = 0; i < 8; ++i) {
       // train and validate TODO
