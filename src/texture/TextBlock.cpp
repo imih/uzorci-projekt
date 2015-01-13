@@ -64,7 +64,8 @@ namespace texture {
         f_[0] += (p.at<float>(i, j) * p.at<float>(i, j));
         f_[2] += (p.at<float>(i, j) * i * j);
         f_[4] += (p.at<float>(i, j) / (1 + (i - j) * (i - j)));
-        f_[8] -= (p.at<float>(i, j) * log(p.at<float>(i, j)));
+        if(fabs(fabs(p.at<float>(i, j)) - 10e-6) > 10e-6)
+          f_[8] -= (p.at<float>(i, j) * log(p.at<float>(i, j)));
       }
     }
 
@@ -72,8 +73,10 @@ namespace texture {
     float hx = 0, hy = 0;
     for(int i = 1; i <= ng; ++i) {
       f_[3] += (px.at<float>(0, i) * (i - mean_val));
-      hx += (px.at<float>(0, i) * log(px.at<float>(0, i)));
-      hy += (py.at<float>(0, i) * log(py.at<float>(0, i)));
+      if(fabs(fabs(px.at<float>(0, i)) - 10e-6) > 10e-6)
+        hx += (px.at<float>(0, i) * log(px.at<float>(0, i)));
+      if(fabs(fabs(py.at<float>(0, i)) - 10e-6) > 10e-6)
+        hy += (py.at<float>(0, i) * log(py.at<float>(0, i)));
     }
 
     cv::Scalar sigmax, sigmay, mix, miy;
@@ -85,17 +88,19 @@ namespace texture {
     for(int k = 0; k <= ng - 1; ++k) {
       f_[1] += (pxmy.at<float>(0, k) * k * k);
       f_[9] += ((pxmy.at<float>(0, k) - meanpxmy) * (pxmy.at<float>(0, k) - meanpxmy));
-      f_[10] -= (pxmy.at<float>(0, k) * log(pxmy.at<float>(0, k)));
+      if(fabs(fabs(pxmy.at<float>(0, k)) - 10e-6) > 10e-6)
+        f_[10] -= (pxmy.at<float>(0, k) * log(pxmy.at<float>(0, k)));
     }
     f_[9]  /= ng;
 
     for(int i = 2; i <= 2 * ng; ++i) {
       f_[5] += (pxpy.at<float>(0, i) * i);
-      f_[7] -= (pxpy.at<float>(0, i) * log(pxpy.at<float>(0, i)));
+      if(fabs(fabs(pxpy.at<float>(0, i)) - 10e-6) > 10e-6)
+        f_[7] -= (pxpy.at<float>(0, i) * log(pxpy.at<float>(0, i)));
     }
 
     for(int i = 2; i <= 2 * ng; ++i) {
-      f_[6] += ((i - f_[7]) * (i - f_[7]) * pxpy.at<float>(0, i));
+      f_[6] += ((float) (i - f_[7]) * (i - f_[7]) * pxpy.at<float>(0, i));
     }
 
     float hxy1 = 0, hxy2 = 0;
