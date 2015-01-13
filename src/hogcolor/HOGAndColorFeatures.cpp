@@ -122,7 +122,7 @@ namespace hog {
   }
 
   void calc_features(Mat &image, vector< HOGBlock > &feature_vectors, 
-      std::set<int> skipped) {
+      std::set<int> chosen) {
     Mat grad[ANGLE_CNT];
     calc_gradients(image, grad);
 
@@ -136,7 +136,7 @@ namespace hog {
       for (int i = 0; i + block_sizes[bl][1] <= r; i += shift) {
         for (int j = 0; j + block_sizes[bl][0] <= c; j += shift) {
           block_id++;
-          if(skipped.count(block_id)) 
+          if(chosen.size() && !chosen.count(block_id)) 
             continue;
           Mat blk_grad[ANGLE_CNT];
 

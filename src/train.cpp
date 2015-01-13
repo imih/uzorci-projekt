@@ -32,7 +32,7 @@ const int maxlen = 2048;
 // window size is fixed: 64 x 128
 const int colWin = 64;
 const int rowWin = 128;
-const int negSampleSize = 20000;
+const int negSampleSize = 10000;
 
 struct ImNode {
   string fileName;
@@ -45,7 +45,7 @@ vector<ImNode> posImNodes, negImNodes;
 
 char temp[maxlen];
 void getTrainingSet() {
-  ifstream posList("../dataset/train_65x128_H96/pos.lst");
+  ifstream posList("../dataset/train_64x128_H96/pos.lst");
   while(posList.getline(temp, maxlen)) {
     string curPath = "../dataset/" + string(temp);
     posImNodes.push_back(ImNode(curPath));
@@ -80,8 +80,7 @@ int main(int argc, char** argv) {
   puts("Getting features...pos...");
   vector<vector<TextBlock> > perBlockPosTex;
   vector<vector<HOGBlock> > perBlockPosHog;
-  vector<vector<TextBlock> > perBlockNegTex;
-  vector<vector<HOGBlock> > perBlockNegHog;
+  vector<vector<TextBlock> > perBlockNegTex; vector<vector<HOGBlock> > perBlockNegHog;
   clock_t begin = clock();
 
   if(readFeatFromFile) {
@@ -134,11 +133,11 @@ int main(int argc, char** argv) {
   waitKey(0);
 
   // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
-  set<int> texSkip, hogSkip;
-  // ovo bi trebalo biti na validation setu! TODO
+  set<int> texChosen, hogChosen;
   puts("Performing per block analysis...\n"); 
-  plsPerBlock(perBlockPosTex, perBlockNegTex, texSkip,
-      perBlockPosHog, perBlockNegHog, hogSkip);
+  plsPerBlock(perBlockPosTex, perBlockNegTex, texChosen,
+      perBlockPosHog, perBlockNegHog, hogChosen);
+  
   //cross validate:
   //1) n_factors - stage 1
   //2) n_factors - stage 2 TODO

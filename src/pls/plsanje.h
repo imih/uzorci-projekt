@@ -3,6 +3,8 @@
 #include <set>
 #include <vector>
 
+#include <opencv2/ml/ml.hpp>
+
 #include "../texture/TextBlock.h"
 #include "../hogcolor/HOGBlock.h"
 

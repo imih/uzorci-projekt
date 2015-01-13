@@ -5,14 +5,15 @@
 #include "model.h"
 #include "plsanje.h"
 
+
 using std::vector;
 using texture::TextBlock;
 using hog::HOGBlock;
 using std::random_shuffle;
 using std::sort;
+using cv::Mat;
 
-double getVip(Model& model) {
-  double ret1 = 0, ret2 = 0;
+double getVip(Model& model) { double ret1 = 0, ret2 = 0;
   Matrix<float>* W = model.GetWMatrix();
   Vector<float>* b = model.GetbVector();
   for(int k = 0; k < model.nfactors; ++k) {
@@ -37,12 +38,23 @@ bool cmpHogBlock(const HOGBlock& a, const HOGBlock& b) {
 
 const int kBlkFactors = 16;
 
+void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int block, 
+    int k, vector<vector<TextBlock> >& posTex, vector<vector<TextBlock> >& negTex, 
+    vector<vector<HOGBlock> >& posHog, vector<vector<HOGBlock> >& negHog) {
+  //create  validation and training set TODO
+}
+
+float errCnt(Mat& h, Mat& y) {
+  //TODO
+  return 0;
+}
+
 void plsPerBlock(vector<vector<TextBlock> >& posTex, 
     vector<vector<TextBlock> >& negTex, 
-    set<int>& skipTex,
+    set<int>& chosenT,
     vector<vector<HOGBlock> >& posHog, 
     vector<vector<HOGBlock> >& negHog, 
-    set<int>& skipHog) {
+    set<int>& chosenH) {
   Model model;
   Matrix<float> *mPos, *mNeg;
 
@@ -107,25 +119,55 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   for(int i = 0; i < nnh; ++i)
     sort(negHog[i].begin(), negHog[i].end(), cmpHogBlock);
 
-  std::srand((unsigned) time(NULL));
-  random_shuffle(posTex.begin(), posTex.end());
-  random_shuffle(negTex.begin(), negTex.end());
-  random_shuffle(posHog.begin(), posHog.end());
-  random_shuffle(negHog.begin(), negHog.end());
+  /*
+     std::srand((unsigned) time(NULL));
+     random_shuffle(posTex.begin(), posTex.end());
+     random_shuffle(negTex.begin(), negTex.end());
+     random_shuffle(posHog.begin(), posHog.end());
+     random_shuffle(negHog.begin(), negHog.end());
+     */
+
+  CvSVMParams svmparams;
+  svmparams.svm_type = CvSVM::C_SVC;
+  svmparams.kernel_type = CvSVM::POLY;
+  svmparams.degree = 2;
+  svmparams.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
+
+  CvSVM svm;
 
   int posBlockSizes[8] = {1, 2, 4, 8, 16, 32, 64, 128};
   vector<double> avgScore(8, 0);
 
-  for(int kpt  = 0, knt = 0, kph = 0, knh = 0; kpt < (int) posTex.size(); 
-      kpt += pt_n, knt += nt_n, kph += ph_n, knh += nh_n) {
-    //create  validation and training set TODO
+  for(int k = 0; k < 10; ++k) {
+    //ajmo prvo bez pls (ostatak TODO )
     for(int i = 0; i < 8; ++i) {
-      // train and validate
+      // train and validate TODO
+      Mat trainData, trainRes, valData, valRes, valH;
+      splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
+          posTex, negTex, posHog, negHog);
+      svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
+      svm.predict(valData, valH);
+      float err = errCnt(valH, valRes);
+      avgScore[i] += err;
     }
   }
 
-  //update the sets TODO
-
+  int bestBlock = posBlockSizes[max_element(avgScore.begin(), avgScore.end()) 
+    - avgScore.begin()];
+  int t = 0, h = 0;
+  chosenT.clear();
+  chosenH.clear();
+  for(int i = 0; i < bestBlock; ++i) {
+    int tid = posTex[0][t].block_id;
+    int hid = posHog[0][h].block_id;
+    if(tvip[tid] < hvip[hid]) {
+      chosenH.insert(hid);
+      h++;
+    } else {
+      chosenT.insert(tid);
+      t++;
+    }
+  }
 
   return;
 }

@@ -45,7 +45,7 @@ namespace texture {
   using namespace cv;
   using namespace std;
 
-  void getTextBlocks(Mat orgImage, vector<TextBlock>& texBlocks, set<int> skippedBlocks) {
+  void getTextBlocks(Mat orgImage, vector<TextBlock>& texBlocks, set<int> chosenBlocks) {
     int block_id = -1;
     for(int bl_size = 16; bl_size <= 32; bl_size += 16) {
       for(int p = 0; p < 4; ++p) {
@@ -69,7 +69,7 @@ namespace texture {
         for(int i = 0; i < m[0].cols; i += (bl_size / 2) + 1)  { 
           for(int j = 0; j < m[0].rows; j += (bl_size / 2) + 1) {
             block_id++;
-            if(skippedBlocks.count(block_id))
+            if(chosenBlocks.size() && !chosenBlocks.count(block_id))
               continue;
             TextBlock t(p, block_id);
             for(int k = 0; k < image.channels(); ++k) {

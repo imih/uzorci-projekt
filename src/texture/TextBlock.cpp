@@ -121,8 +121,7 @@ namespace texture {
     float hxy1 = 0, hxy2 = 0;
     for(int i = 1; i <= ng; ++i)
       for(int j = 1; j <= ng; ++j) {
-        if((fabs(px.at<float>(0, i) - 10e-6) > 10e-6) 
-            || (fabs(py.at<float>(0, j) - 10e-6) > 10e-6)) {
+        if((fabs(px.at<float>(0, i) * py.at<float>(0, j)) - 10e-6) > 10e-3) {
           hxy1 -= (p.at<float>(i, j) * log(
                 px.at<float>(0, i) * py.at<float>(0, j)));
           hxy2 -= (px.at<float>(0, i) * py.at<float>(0, j) * log(
