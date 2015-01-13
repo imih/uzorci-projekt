@@ -44,14 +44,12 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     mPos = new Matrix<float>(pnt, mt);
     for(int j = 0; j < pnt; ++j) {
       //i-ti blok u j-tom primjeru
-      Vector<float> featureV = posTex[j][i].f;
-      mPos->SetRow(&featureV, j);
+      mPos->SetRow(&posTex[j][i].f, j);
     }
 
     mNeg = new Matrix<float>(nnt, mt);
     for(int j = 0; j < nnt; ++j) {
-      Vector<float> featureV = negTex[j][i].f;
-      mNeg->SetRow(&featureV, j);
+      mNeg->SetRow(&negTex[j][i].f, j);
     }
 
     model.CreatePLSModel(mPos, mNeg, kBlkFactors);
@@ -67,14 +65,12 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   for(int i = 0; i < hblocks; ++i) {
     mPos = new Matrix<float>(pnh, mh);
     for(int j = 0; j < pnh; ++j) {
-      Vector<float> featureV = posHog[j][i].f;
-      mPos->SetRow(&featureV, j);
+      mPos->SetRow(&posHog[j][i].f, j);
     }
 
     mNeg = new Matrix<float>(nnh, mh);
     for(int j = 0; j < nnh; ++j) {
-      Vector<float> featureV = negHog[j][i].f;
-      mNeg->SetRow(&featureV, j);
+      mNeg->SetRow(&negHog[j][i].f, j);
     }
     model.CreatePLSModel(mPos, mNeg , kBlkFactors);
     hvip[i] = getVip(model);
@@ -95,6 +91,10 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   random_shuffle(negTex.begin(), negTex.end());
   random_shuffle(posHog.begin(), posHog.end());
   random_shuffle(negHog.begin(), negHog.end());
+
+
+
+
 
 
   //update the sets TODO

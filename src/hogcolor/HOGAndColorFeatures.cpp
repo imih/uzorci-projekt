@@ -51,15 +51,15 @@ namespace hog {
     for (int i = 0; i < ANGLE_CNT; ++i)
       split(grad[i], planes[i]);
 
-    vector< float > color_hist(3, 0.0);
-    vector<vector< float > > angle_hist(3, vector<float>(ANGLE_BIN_CNT, 0.0));
+    float color_hist[3] = {0};
+    float angle_hist[3][ANGLE_BIN_CNT] = {0};
 
     int r = grad[0].rows;
     int c = grad[0].cols;
 
     for (int i = 0; i < r; ++i) {
       for (int j = 0; j < c; ++j) {
-        vector< float > square_norms(3);
+        float square_norms[3] = {0};
         for (int ch = 0; ch < 3; ++ch) {
           float dx = planes[ANGLE_0][ch].at< unsigned char >(i, j);
           float dy = planes[ANGLE_90][ch].at< unsigned char >(i, j);
@@ -77,8 +77,8 @@ namespace hog {
           assert(A >= 0 && A < ANGLE_BIN_CNT);
           angle_hist[ch][A] += sqrt(dx * dx + dy * dy); // dodat tezinski na susjede?
         }
-        int best = max_element(square_norms.begin(), square_norms.end())
-          - square_norms.begin();
+        int best = max_element(square_norms, square_norms + 3)
+          - square_norms;
 
         color_hist[best] += 1;
       }
