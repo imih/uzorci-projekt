@@ -81,10 +81,25 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   //**************************************************************
   //chose subset of blocks you want to have in the 1st stage using 
   //10-fold cross validation  
-  int pt_n = (int) posTex.size() / 10;
+  int pt_n = (int) posTex.size() / 10
   int nt_n = (int) negTex.size() / 10;
   int ph_n = (int) posHog.size() / 10;
   int ng_n = (int) negHog.size() / 10;
+
+  //sort every row by vip score
+  sort(posTex.begin(), potTex.end(), [&tvip](TextBlock& a, TextBlock& b){
+      return tvip[a.block_id] > tvip[b.block_id];
+      });
+  sort(negTex.begin(), negTex.end(), [&tvip](TextBlock& a, TextBlock& b) {
+      return tvip[a.block_id] > tvip[b.block_id];
+      });
+  sort(posHog.begin(), posHog.end(), [&hvip](HOGBlock& a, HOGBlock& b) {
+      return hvip[a.block_id] > hvip[b.block_id];
+      });
+  sort(negHog.begin(), negHog.end(), [&hvip](HOGBlock& a, HOGBlock& b) {
+      return hvip[a.block_id] > hvip[b.block_id];
+      });
+
 
   std::srand((unsigned) time(NULL));
   random_shuffle(posTex.begin(), posTex.end());
@@ -92,11 +107,17 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   random_shuffle(posHog.begin(), posHog.end());
   random_shuffle(negHog.begin(), negHog.end());
 
+  vector<int> posBlockSizes = {1, 2, 4, 8, 16, 32, 64, 128};
+  vector<double> avgScore((int) posBlockSizes.size(), 0);
+
+  for(int kpt  = 0, knt = 0, kph = 0, kng = 0, kpt < (int) posTex.size(); 
+      kpt += pt_n, knt += nt_n, kph += ph_n, kng += ng_n) {
 
 
 
 
-
+  }
+  
   //update the sets TODO
 
 

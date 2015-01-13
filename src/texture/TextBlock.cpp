@@ -5,9 +5,9 @@
 namespace texture {
   using cv::Mat;
 
-  TextBlock::TextBlock(int p, int block_id) {
+  TextBlock::TextBlock(int p, int bl_id) {
     coOccType = p;
-    blockId = block_id;
+    block_id = bl_id;
     idx = 0;
   }
 

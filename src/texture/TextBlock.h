@@ -22,7 +22,7 @@ namespace texture {
     void addFeatures(cv::Mat&);
 
     Vector<float> f; //Haralick features
-    int blockId;
+    int block_id;
 
     private:
     int idx;

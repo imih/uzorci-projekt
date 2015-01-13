@@ -4,4 +4,5 @@ find_package(OpenCV REQUIRED)
 add_executable(train train.cpp hogcolor/HOGAndColorFeatures.cpp texture/TextBlock.cpp 
   texture/TextFeatures.cpp pls/pls.cpp pls/model.cpp pls/Storage.cpp 
   pls/maths.cpp pls/plsanje.cpp pls/base64.cpp pls/encoding.cpp)
+add_definitions(-std=c++11)
 target_link_libraries(train ${OpenCV_LIBS})

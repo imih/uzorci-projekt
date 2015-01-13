@@ -27,11 +27,14 @@ using namespace cv;
 #define cast boost::lexical_cast
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
+const bool readFeatFromFile = false;
+const bool writeFeatToFile = true;
 const int maxlen = 2048;
 
 // window size is fixed: 64 x 128
 const int colWin = 64;
 const int rowWin = 128;
+const int negSampleSize = 20000;
 
 struct ImNode {
   string fileName;
@@ -74,40 +77,48 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
 }
 
 int main(int argc, char** argv) {
-  getTrainingSet();
   //have posImNodes and negImNodes now
 
   puts("Getting features...pos...");
   vector<vector<TextBlock> > perBlockPosTex;
   vector<vector<HOGBlock> > perBlockPosHog;
-  clock_t begin = clock();
-
-  for(int im = 0; im < (int) posImNodes.size(); ++im) {
-    Mat curWin = cv::imread(posImNodes[im].fileName, 1); //BGR
-    perBlockPosTex.push_back(getTextFeatures(curWin));
-    perBlockPosHog.push_back(getHOGFeatures(curWin)); 
-    clock_t endPos = clock();
-    printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
-        double(endPos - begin) / CLOCKS_PER_SEC);
-  }
-  posImNodes.clear();
-
-  puts("neg...");
   vector<vector<TextBlock> > perBlockNegTex;
   vector<vector<HOGBlock> > perBlockNegHog;
-  for(int im = 0; im < (int) negImNodes.size(); ++im) {
-    Mat image = cv::imread(negImNodes[im].fileName, 1); //BGR
-    for(int i = 0; i + rowWin <= image.rows; i += rowWin) 
-      for(int j = 0; j + colWin <= image.cols; j += colWin) {
-        // mozemo extraktat vise negativnih primjera! TODO
-        Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
-        perBlockNegTex.push_back(getTextFeatures(curWin));
-        perBlockNegHog.push_back(getHOGFeatures(curWin));
-        clock_t endPos = clock();
-        printf("%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
-      } 
+  clock_t begin = clock();
+
+  if(readFeatFromFile) {
+    //read vectors from file TODO
+  } else {
+    getTrainingSet();
+    for(int im = 0; im < (int) posImNodes.size(); ++im) {
+      Mat curWin = cv::imread(posImNodes[im].fileName, 1); //BGR
+      perBlockPosTex.push_back(getTextFeatures(curWin));
+      perBlockPosHog.push_back(getHOGFeatures(curWin)); 
+      clock_t endPos = clock();
+      printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
+          double(endPos - begin) / CLOCKS_PER_SEC);
+    }
+    posImNodes.clear();
+
+    puts("neg...");
+    int w = 0;
+    for(int im = 0; im < (int) negImNodes.size(); ++im) {
+      Mat image = cv::imread(negImNodes[im].fileName, 1); //BGR
+      for(int i = 0; i + rowWin <= image.rows; i += rowWin) 
+        for(int j = 0; j + colWin <= image.cols; j += colWin) {
+          w++;
+          // mozemo extraktat vise negativnih primjera! TODO
+          Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
+          perBlockNegTex.push_back(getTextFeatures(curWin));
+          perBlockNegHog.push_back(getHOGFeatures(curWin));
+          clock_t endPos = clock();
+          printf("%d/%d t:%0.3lfs\n", w, negSampleSize, 
+              double(endPos - begin) / CLOCKS_PER_SEC);
+          if(w > negSampleSize) break;
+        } 
+    }
+    negImNodes.clear();
   }
-  negImNodes.clear();
 
   puts("done loading  features\n");
   clock_t endPos = clock();
@@ -119,15 +130,15 @@ int main(int argc, char** argv) {
   // ovo bi trebalo biti na validation setu! TODO
   puts("Performing per block analysis...\n"); 
   plsPerBlock(perBlockPosTex, perBlockNegTex, texSkip,
-     perBlockPosHog, perBlockNegHog, hogSkip);
+      perBlockPosHog, perBlockNegHog, hogSkip);
   //cross validate:
   //1) n_factors - stage 1
   //2) n_factors - stage 2 TODO
 
   /*
 
-  CvSVM SVM;
-  SVM.train_auto(mpos + mneg,  ypos + yneg, Mat(), Mat(), params);
+     CvSVM SVM;
+     SVM.train_auto(mpos + mneg,  ypos + yneg, Mat(), Mat(), params);
   //write ALL parameters to file
   */
 
