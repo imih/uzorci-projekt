@@ -63,13 +63,13 @@ namespace hog {
         for (int ch = 0; ch < 3; ++ch) {
           float dx = planes[ANGLE_0][ch].at< unsigned char >(i, j);
           float dy = planes[ANGLE_90][ch].at< unsigned char >(i, j);
-          square_norms[ch] = dx * dx + dy * dy;
+          square_norms[ch] = (float) dx * dx + dy * dy;
 
           float alpha = atan2(dy, dx);
           if (alpha < 0.0) alpha += PI;
           if (alpha >= PI) alpha = 0.0;
 
-          alpha *= 180.0 / PI;
+          alpha *= (180.0 / PI);
 
           int a = floor(alpha) - 1e-6;
           int A = a / (180 / ANGLE_BIN_CNT);

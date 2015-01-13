@@ -1,14 +1,29 @@
 #include "TextBlock.h"
 
 #include <cassert>
+#include <string>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace texture {
   using cv::Mat;
+  using std::string;
 
   TextBlock::TextBlock(int p, int bl_id) {
     coOccType = p;
     block_id = bl_id;
     idx = 0;
+  }
+
+  TextBlock::TextBlock(string& s, int bl_id) {
+    vector<string> fs;
+    boost::algorithm::split(fs, s, boost::is_any_of(" "));
+    int n = (int) fs.size();
+    f = Vector<float>(n);
+    for(int i = 0; i < n; ++i)
+      f.SetElement(i, boost::lexical_cast<float>(fs[i]));
+    block_id = bl_id;
   }
 
   void TextBlock::addFeatures(cv::Mat& blockIm) {
@@ -106,10 +121,13 @@ namespace texture {
     float hxy1 = 0, hxy2 = 0;
     for(int i = 1; i <= ng; ++i)
       for(int j = 1; j <= ng; ++j) {
-        hxy1 -= (p.at<float>(i, j) * log(
-              px.at<float>(0, i) * py.at<float>(0, j)));
-        hxy2 -= (px.at<float>(0, i) * py.at<float>(0, j) * log(
-              px.at<float>(0, i) * py.at<float>(0, j)));
+        if((fabs(px.at<float>(0, i) - 10e-6) > 10e-6) 
+            || (fabs(py.at<float>(0, j) - 10e-6) > 10e-6)) {
+          hxy1 -= (p.at<float>(i, j) * log(
+                px.at<float>(0, i) * py.at<float>(0, j)));
+          hxy2 -= (px.at<float>(0, i) * py.at<float>(0, j) * log(
+                px.at<float>(0, i) * py.at<float>(0, j)));
+        }
       }
 
     f_[11] = (f_[8] - hxy1) / max(hx, hy);

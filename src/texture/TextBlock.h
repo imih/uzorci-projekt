@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <map>
+#include <string>
 
 #include <opencv2/core/core.hpp>
 
@@ -17,6 +17,7 @@ namespace texture {
     //contains all textural features for one block accross 3 color channels
     // for one co-occ type
     TextBlock(int, int);
+    TextBlock(std::string&, int);
     TextBlock();
 
     void addFeatures(cv::Mat&);

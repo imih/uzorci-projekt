@@ -6,9 +6,6 @@
 #include <vector>
 #include <cassert>
 
-#include <boost/algorithm/string.hpp> 
-#include <boost/lexical_cast.hpp>
-
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -26,7 +23,6 @@ using namespace hog;
 using namespace std;
 using namespace cv;
 
-#define cast boost::lexical_cast
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
 const bool readFeatFromFile = false;
@@ -49,7 +45,7 @@ vector<ImNode> posImNodes, negImNodes;
 
 char temp[maxlen];
 void getTrainingSet() {
-  ifstream posList("../dataset/train_64x128_H96/pos.lst");
+  ifstream posList("../dataset/train_65x128_H96/pos.lst");
   while(posList.getline(temp, maxlen)) {
     string curPath = "../dataset/" + string(temp);
     posImNodes.push_back(ImNode(curPath));
@@ -106,7 +102,7 @@ int main(int argc, char** argv) {
 
     if(writeFeatToFile) {
       writeTex(perBlockPosTex, 1);
-      writeHog(perBlockPosHog, 1);
+      //writeHog(perBlockPosHog, 1);
     }
 
     puts("neg...");

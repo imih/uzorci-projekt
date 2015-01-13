@@ -17,20 +17,39 @@ using texture::TextBlock;
 using hog::HOGBlock;
 using boost::algorithm::join;
 
+const int maxlen = 800000;
+char t[maxlen];
+
+template<typename T> 
+void readFile(vector<vector<T> >& v, string fileName) {
+  ifstream file(fileName.c_str());
+  while(file.getline(t, maxlen)) {
+    //for each sample:
+    int n = strlen(t);
+    vector<string> blocks;
+    boost::algorithm::split(blocks, t, boost::is_any_of("\t"));
+    vector<T> sample;
+    int b = (int) blocks.size();
+    for(int i = 0; i < b; ++i) {
+      sample.push_back(T(blocks[i], i));
+    }
+    v.push_back(sample);
+  }
+}
+
 void readTex(vector<vector<TextBlock> >& v, bool ret) {
-  //ifstream file("../dataset/tex." + boost::lexical_cast<string>(ret));
-  //TODO
+  readFile(v, "../dataset/tex." + boost::lexical_cast<string>(ret));
 }
 
 void readHog(vector<vector<HOGBlock> >& v, bool ret) {
-  //ifstream file("../dataset/hog." + boost::lexical_cast<string>(ret));
-  //TODO
+  readFile(v, "../dataset/hog." + boost::lexical_cast<string>(ret));
 }
 
 //assuming v[i] is sorted by id
 template <typename T>
 void writeFile(vector<vector<T> >& v, string fileName) {
   int samples = (int) v.size();
+  assert(samples > 0);
   int blocks = (int) v[0].size();
 
   ofstream file(fileName.c_str());
