@@ -71,7 +71,8 @@ namespace texture {
     vector<float> f_ = vector<float>(13);
     for(int i = 1; i <= ng; ++i) {
       for(int j = 1; j <= ng; ++j) {
-        p.at<float>(i, j) /= R;
+        if(R != 0)
+          p.at<float>(i, j) /= R;
         px.at<float>(0, i) += p.at<float>(i, j);
         py.at<float>(0, j) += p.at<float>(i, j);
         pxpy.at<float>(0, i + j) +=  p.at<float>(i, j);
@@ -79,7 +80,7 @@ namespace texture {
         f_[0] += (p.at<float>(i, j) * p.at<float>(i, j));
         f_[2] += (p.at<float>(i, j) * i * j);
         f_[4] += (p.at<float>(i, j) / (1 + (i - j) * (i - j)));
-        if(fabs(p.at<float>(i, j) - 10e-6) > 10e-6)
+        if(p.at<float>(i, j) > 10e-6)
           f_[8] -= (p.at<float>(i, j) * log(p.at<float>(i, j)));
       }
     }
@@ -88,29 +89,32 @@ namespace texture {
     float hx = 0, hy = 0;
     for(int i = 1; i <= ng; ++i) {
       f_[3] += (px.at<float>(0, i) * (i - mean_val));
-      if((fabs(px.at<float>(0, i)) - 10e-6) > 10e-6)
+      if(px.at<float>(0, i) > 10e-6)
         hx += (px.at<float>(0, i) * log(px.at<float>(0, i)));
-      if(fabs(py.at<float>(0, i) - 10e-6) > 10e-6)
+      if(py.at<float>(0, i) > 10e-6)
         hy += (py.at<float>(0, i) * log(py.at<float>(0, i)));
     }
 
     cv::Scalar sigmax, sigmay, mix, miy;
     meanStdDev(px, mix, sigmax);
     meanStdDev(py, miy, sigmay);
-    f_[2] = (f_[2] - mix[0] * miy[0]) / (sigmax[0] * sigmay[0]);
+    f_[2] = (f_[2] - mix[0] * miy[0]); 
+    if(fabs(sigmax[0] * sigmay[0]) > 10e-6)
+      f_[2] /= (sigmax[0] * sigmay[0]);
 
     float meanpxmy = mean(pxmy)[0];
     for(int k = 0; k <= ng - 1; ++k) {
       f_[1] += (pxmy.at<float>(0, k) * k * k);
       f_[9] += ((pxmy.at<float>(0, k) - meanpxmy) * (pxmy.at<float>(0, k) - meanpxmy));
-      if(fabs(pxmy.at<float>(0, k) - 10e-6) > 10e-6)
+      if(pxmy.at<float>(0, k) > 10e-6)
         f_[10] -= (pxmy.at<float>(0, k) * log(pxmy.at<float>(0, k)));
     }
-    f_[9]  /= ng;
+    if(ng != 0)
+      f_[9]  /= ng;
 
     for(int i = 2; i <= 2 * ng; ++i) {
       f_[5] += (pxpy.at<float>(0, i) * i);
-      if(fabs(pxpy.at<float>(0, i) - 10e-6) > 10e-6)
+      if(pxpy.at<float>(0, i) > 10e-6)
         f_[7] -= (pxpy.at<float>(0, i) * log(pxpy.at<float>(0, i)));
     }
 
@@ -121,7 +125,7 @@ namespace texture {
     float hxy1 = 0, hxy2 = 0;
     for(int i = 1; i <= ng; ++i)
       for(int j = 1; j <= ng; ++j) {
-        if((fabs(px.at<float>(0, i) * py.at<float>(0, j)) - 10e-6) > 10e-3) {
+        if(px.at<float>(0, i) * py.at<float>(0, j) > 10e-6)  {
           hxy1 -= (p.at<float>(i, j) * log(
                 px.at<float>(0, i) * py.at<float>(0, j)));
           hxy2 -= (px.at<float>(0, i) * py.at<float>(0, j) * log(

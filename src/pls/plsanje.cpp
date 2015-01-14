@@ -14,6 +14,14 @@ using std::sort;
 using cv::Mat;
 using std::pair;
 
+CvSVMParams getSVMParams(){
+  CvSVMParams svmparams;
+  svmparams.svm_type = CvSVM::C_SVC;
+  svmparams.kernel_type = CvSVM::POLY;
+  svmparams.degree = 2;
+  svmparams.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
+};
+
 double getVip(Model& model) { double ret1 = 0, ret2 = 0;
   Matrix<float>* W = model.GetWMatrix();
   Vector<float>* b = model.GetbVector();
@@ -41,16 +49,29 @@ bool cmpAllBlocks(const pair<char, int>& a, const pair<char, int>& b) {
   return v1 >= v2;
 }
 
-vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block) {
+vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block, 
+    bool order = false) {
   vector<float> ret;
+  int t_id = 0, h_id = 0;
   for(int i = 0; i < block; ++i) {
+    if(order) {
     pair<char, int> cur = allBlocks[i];
     if(cur.first == 't') {
       for(int j = 0; j < t[cur.second].f.n; ++j) 
         ret.push_back(t[cur.second].f.GetElement(j));
     } else {
       for(int j = 0; j < h[cur.second].f.n; ++j)
-        ret.push_back(h[cur.second].f.GetElement(j));
+        ret.push_back(h[cur.second].f.GetElement(j)); }
+    } else {
+      if(t_id != (int) t.size()) {
+        for(int j = 0; j < t[t_id].f.n; ++j) 
+          ret.push_back(t[t_id].f.GetElement(j));
+        t_id++;
+      } else {
+        for(int j = 0; j < h[h_id].f.n; ++j)
+          ret.push_back(h[h_id].f.GetElement(j)); 
+        h_id++;
+      }
     }
   }
   return ret;
@@ -62,7 +83,7 @@ vector<int> sample_ids;
 int last;
 void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int block, 
     int k, vector<vector<TextBlock> >& posTex, vector<vector<TextBlock> >& negTex, 
-    vector<vector<HOGBlock> >& posHog, vector<vector<HOGBlock> >& negHog) {
+    vector<vector<HOGBlock> >& posHog, vector<vector<HOGBlock> >& negHog, bool order = false) {
   if(!k) last = 0;
 
   int N = (int) sample_ids.size();
@@ -96,11 +117,11 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
     vector<float> allFeatures;
     if(cur_id >= 0) {
       curResp.at<float>(cur_val, 0) = 1;
-      allFeatures = getFeats(posTex[cur_id], posHog[cur_id], block);
+      allFeatures = getFeats(posTex[cur_id], posHog[cur_id], block, order);
     } else {
       curResp.at<float>(cur_val, 0) = 0;
       cur_id = - cur_id - 1;
-      allFeatures = getFeats(negTex[cur_id], negHog[cur_id], block);
+      allFeatures = getFeats(negTex[cur_id], negHog[cur_id], block, order);
     }
 
     assert((int) allFeatures.size() == features);
@@ -118,7 +139,7 @@ double errCnt(Mat& h, Mat& y) {
   int n = h.rows;
   double ret = 0;
   for(int i = 0; i < n; ++i) {
-    if(fabs(fabs(y.at<float>(i, 0) - h.at<float>(i, 0)) - 10e-6) > 10e-6)
+    if(fabs(y.at<float>(i, 0) - h.at<float>(i, 0)) > 10e-6)
       ret +=  (y.at<float>(i, 0) - h.at<float>(i, 0)) * 
         log(fabs(y.at<float>(i, 0) - h.at<float>(i, 0)));
   }
@@ -198,24 +219,20 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
   random_shuffle(sample_ids.begin(), sample_ids.end());
 
-  CvSVMParams svmparams;
-  svmparams.svm_type = CvSVM::C_SVC;
-  svmparams.kernel_type = CvSVM::POLY;
-  svmparams.degree = 2;
-  svmparams.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
-
+  CvSVMParams svmparams = getSVMParams();
   CvSVM svm;
 
   int posBlockSizes[8] = {1, 2, 4, 8, 16, 32, 64, 128};
   vector<double> avgScore(8, 0);
 
+  Mat trainData, trainRes, valData, valRes, valH; 
   for(int k = 0; k < 10; ++k) {
     //chose subset of blocks you want to have in the 1st stage using 
     //10-fold cross validation  
-    //ajmo prvo bez pls (ostatak TODO )
     for(int i = 0; i < 8; ++i) {
-      Mat trainData, trainRes, valData, valRes, valH; splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
-          posTex, negTex, posHog, negHog);
+      splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
+          posTex, negTex, posHog, negHog, true);
+      //ajmo prvo bez pls (ostatak TODO )
       svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
       svm.predict(valData, valH);
       double err = errCnt(valH, valRes);
@@ -234,15 +251,65 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       chosenT.insert(allBlocks[i].second);
     }
   }
-
   return;
 }
 
-/*
-void plsFull(Model& m, int n_factors_best, vector<vector<TextBlock> >& posTex, 
-    vector<vector<TextBlock> >& negTex, vector<vector<HOGBlock> >& posHog, 
-    vector<vector<HOGBlock> >& negHog) {
-  //TODO
-  //chhose n_factors for 2nd stage
+void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex, 
+    vector<vector<TextBlock> >& negTex, set<int>& chosenT, vector<vector<HOGBlock> >& posHog, 
+    vector<vector<HOGBlock> >& negHog, set<int>& chosenH) {
+  //choose n_factors for 2nd (full) stage and the blocks you want to read them on
+
+  //randomize 
+  std::srand((unsigned) time(NULL));
+  for(int i = 0; i < (int) posTex.size(); ++i) {
+    sample_ids.push_back(i);
+  }
+
+  for(int i = 0; i < (int) negTex.size(); ++i) {
+    sample_ids.push_back(-i - 1);
+  }
+  random_shuffle(sample_ids.begin(), sample_ids.end());
+
+  CvSVMParams svmparams = getSVMParams();
+  CvSVM svm;
+  Model model;
+  Mat trainData, valData;
+  Mat trainRes, valRes;
+  Mat valH; 
+
+  int nfactors[13] = {2, 4, 10, 15, 20, 25, 30, 35, 40, 60, 100, 250, 500};
+  vector<double> avgScore(13, 0);
+
+  //10-fold cross validation  
+  int blocks_no = (int) posTex[0].size() + (int) posHog[0].size();
+    for(int k = 0; k < 10; ++k) {
+      for(int i = 0; i < 13; ++i) {
+        splitSample(trainData, trainRes, valData, valRes, blocks_no, k, posTex, negTex, 
+            posHog, negHog);
+
+        Matrix<float>* mTrain;
+        ConvertMatrixMat(trainData, mTrain);
+        Vector<float>* mVal;
+        ConvertVectorMat(valData, mVal);
+        model.CreatePLSModel(mTrain, mVal, nfactors[i]);
+
+        Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
+        Matrix<float>* mValid;
+        ConvertMatrixMat(valData, mValid);
+        Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
+
+        Mat tD;
+        ConvertMatrixFormat(plsmTrain, tD);
+        svm.train(tD, trainRes, Mat(), Mat(), svmparams);
+
+        Mat vD;
+        ConvertMatrixFormat(plsmValid, vD);
+        svm.predict(vD, valH);
+        double err = errCnt(valH, valRes);
+        avgScore[i] += err;
+      }
+    }
+
+  n_factors_best = nfactors[min_element(avgScore.begin(), avgScore.end()) - avgScore.begin()];
+  //TODO ne znam dobiti samo one blokove koji se koriste  za pls!
 }
-*/

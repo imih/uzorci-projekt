@@ -32,6 +32,7 @@
 #include <emmintrin.h>
 #include "maths.h"
 
+using cv::Mat;
 
 float Maths::DotProductSSENotMultof4(float *v, float *v2, int n) {
 __m128 a, b, c, d;
@@ -119,140 +120,143 @@ int i, n2;
 
 
 // convert from my format to OpenCV format
-void ConvertMatrixFormat(Matrix<float> *m1, CvMat *M1, float **data) {
-float *d1;
-int idx, x, y;
+void ConvertMatrixFormat(Matrix<float>* m1, cv::Mat& M1, float **data) {
+  float *d1;
+  int idx, x, y;
 
-	d1 = (float *) malloc(m1->GetNCols() * m1->GetNRows() * sizeof(float));
-	*data = d1;
+  // copy data to convert to rowwise
+  idx = 0;
+  for (y = 0; y < m1->GetNRows(); y++) {
+    for (x = 0; x < m1->GetNCols(); x++) {
+      d1[idx++] = m1->GetElement(x, y);
+    }
+  }
 
-	// copy data to convert to rowwise
-	idx = 0;
-	for (y = 0; y < m1->GetNRows(); y++) {
-		for (x = 0; x < m1->GetNCols(); x++) {
-			d1[idx++] = m1->GetElement(x, y);
-		}
-	}
-
-	cvInitMatHeader( M1, m1->GetNRows(), m1->GetNCols(), CV_32FC1, d1 );
+  M1 = cv::Mat(m1->GetNRows(), m1->GetNCols(), CV_32F, d1).clone();
 }
 
+void ConvertMatrixMat(cv::Mat& M1, Matrix<float>* m) {
+  // copy data to convert to rowwise
+  m = new Matrix<float>(M1.rows, M1.cols);
+  for (int x = 0; x < M1.rows; x++) {
+    for (int y = 0; y < M1.cols; y++) {
+      m->SetValue(x, y, M1.at<float>(x, y));
+    }
+  }
+}
 
+void ConvertVectorMat(cv::Mat& M1, Vector<float>* m) {
+  m = new Vector<float>(M1.rows);
+  for (int x = 0; x < M1.rows; ++x)
+    m->SetElement(x, M1.at<float>(x, 0));
 
+}
 
 // multiplication of two matrices
 Matrix<float> *MultMatrices(Matrix<float> *m1, Matrix<float> *m2) {
-Matrix<float> *dataRet;
-float *d1, *d2, *d3;
-CvMat M1, M2, M3;
-int x, y, idx;
+  Matrix<float> *dataRet;
+  float *d1, *d2, *d3;
+  Mat M1, M2, M3;
+  int x, y, idx;
 
-	// check if multiplication is consistent
-	if (m1->GetNCols() != m2->GetNRows()) {
-		printf("multiplication of incompatible matrices\n");
-		exit(2);
-	}
+  // check if multiplication is consistent
+  if (m1->GetNCols() != m2->GetNRows()) {
+    printf("multiplication of incompatible matrices\n");
+    exit(2);
+  }
 
-	dataRet = new Matrix<float>(m1->GetNRows(), m2->GetNCols());
+  dataRet = new Matrix<float>(m1->GetNRows(), m2->GetNCols());
 
+  ConvertMatrixFormat(m1, M1, &d1);
+  ConvertMatrixFormat(m2, M2, &d2);
+  ConvertMatrixFormat(dataRet, M3, &d3);
 
-	ConvertMatrixFormat(m1, &M1, &d1);
-	ConvertMatrixFormat(m2, &M2, &d2);
-	ConvertMatrixFormat(dataRet, &M3, &d3);
+  cvMatMulAdd( &M1, &M2, 0, &M3 );
 
+  // copy result
+  idx = 0;
+  for (y = 0; y < dataRet->GetNRows(); y++) {
+    for (x = 0; x < dataRet->GetNCols(); x++) {
+      dataRet->SetValue(x, y, d3[idx++]);
+    }
+  }
 
+  free(d1);
+  free(d2);
+  free(d3);
 
-
-	cvMatMulAdd( &M1, &M2, 0, &M3 );
-
-	// copy result
-	idx = 0;
-	for (y = 0; y < dataRet->GetNRows(); y++) {
-		for (x = 0; x < dataRet->GetNCols(); x++) {
-			dataRet->SetValue(x, y, d3[idx++]);
-		}
-	}
-
-	free(d1);
-	free(d2);
-	free(d3);
-
-	return dataRet;
+  return dataRet;
 }
 
 
 
 // invert a matrix
 Matrix<float> *InvMatrix(Matrix<float> *m) {
-float *d1, *d2;
-CvMat M1, M2;
-Matrix<float> *dataRet;
-int x, y, idx;
-double ret;
+  float *d1, *d2;
+  cv::Mat M1, M2;
+  Matrix<float> *dataRet;
+  int x, y, idx;
+  double ret;
 
-	// check dimensions
-	if (m->GetNCols() != m->GetNRows()) {
-		printf("matrix must be square to invert\n");
-		exit(2);
-	}	
-
-
-	dataRet = new Matrix<float>(m->GetNRows(), m->GetNCols());
-
-	ConvertMatrixFormat(m, &M1, &d1);
-	ConvertMatrixFormat(dataRet, &M2, &d2);
-
-	ret = cvInvert(&M1, &M2);
-
-	if (ret == 0) {
-		printf("error: matrix cannot be inverted\n");
-		exit(2);
-	}
-		
-
-	// copy result
-	idx = 0;
-	for (y = 0; y < dataRet->GetNRows(); y++) {
-		for (x = 0; x < dataRet->GetNCols(); x++) {
-			dataRet->SetValue(x, y, d2[idx++]);
-		}
-	}
+  // check dimensions
+  if (m->GetNCols() != m->GetNRows()) {
+    printf("matrix must be square to invert\n");
+    exit(2);
+  }	
 
 
-	free(d1);
-	free(d2);
+  dataRet = new Matrix<float>(m->GetNRows(), m->GetNCols());
 
-	return dataRet;
+  ConvertMatrixFormat(m, M1, &d1);
+  ConvertMatrixFormat(dataRet, M2, &d2);
+
+  ret = cvInvert(&M1, &M2);
+
+  if (ret == 0) {
+    printf("error: matrix cannot be inverted\n");
+    exit(2);
+  }
+  
+  // copy result
+  idx = 0;
+  for (y = 0; y < dataRet->GetNRows(); y++) {
+    for (x = 0; x < dataRet->GetNCols(); x++) {
+      dataRet->SetValue(x, y, d2[idx++]);
+    }
+  }
+
+  free(d1);
+  free(d2);
+
+  return dataRet;
 }
-
-
 
 // transpose matrix
 Matrix<float> *TransposeMatrix(Matrix<float> *m) {
-float *d1, *d2;
-CvMat M1, M2;
-Matrix<float> *dataRet;
-int x, y, idx;
+  float *d1, *d2;
+  Mat M1, M2;
+  Matrix<float> *dataRet;
+  int x, y, idx;
 
 
-	dataRet = new Matrix<float>(m->GetNCols(), m->GetNRows());
+  dataRet = new Matrix<float>(m->GetNCols(), m->GetNRows());
 
-	ConvertMatrixFormat(m, &M1, &d1);
-	ConvertMatrixFormat(dataRet, &M2, &d2);
+  ConvertMatrixFormat(m, M1, &d1);
+  ConvertMatrixFormat(dataRet, M2, &d2);
 
-	cvTranspose( &M1, &M2 );
+  cvTranspose( &M1, &M2 );
 
-	// copy result
-	idx = 0;
-	for (y = 0; y < dataRet->GetNRows(); y++) {
-		for (x = 0; x < dataRet->GetNCols(); x++) {
-			dataRet->SetValue(x, y, d2[idx++]);
-		}
-	}
+  // copy result
+  idx = 0;
+  for (y = 0; y < dataRet->GetNRows(); y++) {
+    for (x = 0; x < dataRet->GetNCols(); x++) {
+      dataRet->SetValue(x, y, d2[idx++]);
+    }
+  }
 
 
-	free(d1);
-	free(d2);
+  free(d1);
+  free(d2);
 
-	return dataRet;
+  return dataRet;
 }

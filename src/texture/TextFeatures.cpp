@@ -66,16 +66,14 @@ namespace texture {
           }
 
         // co-occ matrix for channel k on distance d of orientation p
-        for(int i = 0; i < m[0].cols; i += (bl_size / 2) + 1)  { 
-          for(int j = 0; j < m[0].rows; j += (bl_size / 2) + 1) {
+        for(int i = 0; i + bl_size <= m[0].cols; i += (bl_size / 2) + 1)  { 
+          for(int j = 0; j + bl_size <= m[0].rows; j += (bl_size / 2) + 1) {
             block_id++;
             if(chosenBlocks.size() && !chosenBlocks.count(block_id))
               continue;
             TextBlock t(p, block_id);
             for(int k = 0; k < image.channels(); ++k) {
-              int len1 = min(bl_size, (int) m[k].cols - i);
-              int len2 = min(bl_size, (int) m[k].rows - j);
-              Mat blockIm(m[k], Rect(i, j, len1, len2));
+              Mat blockIm(m[k], Rect(i, j, bl_size, bl_size));
               t.addFeatures(blockIm);
             }
             texBlocks.push_back(t);

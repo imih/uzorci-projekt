@@ -1,8 +1,7 @@
 /* 
 http://www.liv.ic.unicamp.br/~wschwartz/softwares.html
 
-Copyright (C) 2010-2011 William R. Schwartz
-
+Copyright (C) 2010-2011 William R. Schwartz 
 This source code is provided 'as-is', without any express or implied
 warranty. In no event will the author be held liable for any damages
 arising from the use of this software.
@@ -273,7 +272,6 @@ class Matrix { // matrix is column based
   // get number of columns
   inline int GetNCols() { return c; }
 
-
   Matrix<T> *GetSelectedCols(vector<int> *selectedcols) {
     Matrix<T> *m;
     int i, j, k;
@@ -288,7 +286,6 @@ class Matrix { // matrix is column based
 
     return m;
   }
-
 
   // contatenate rows of matrices, first m1 then m2
   Matrix<T> *ConcatenateMatricesRows(Matrix<T> *m1, Matrix<T> *m2) {
@@ -324,10 +321,8 @@ class Matrix { // matrix is column based
       }
       idxrow++;
     }
-
     return m;
   }
-
 
   // write to a file - write row-wise
   void Write(char *filename) {
@@ -355,7 +350,6 @@ class Matrix { // matrix is column based
 
     fclose(f);
   }
-
 
   void Write(string filename) { Write((char *) filename.c_str()); }
 
@@ -398,12 +392,6 @@ class Matrix { // matrix is column based
 
 };
 
-
-
-
-
-
-
 class Maths {
 
   public:
@@ -413,27 +401,18 @@ class Maths {
     void ZscoreSSE(float *data, float *mean, float *std, float *outputvect, int n);
 };
 
-
-
-
-
-
-
 ///////////////////////
 // OpenCV functions //
 //////////////////////
 // convert matrix format to openCV format - put data used in opencv format
-void ConvertMatrixFormat(Matrix<float> *m1, CvMat *M1, float **data);
-
+void ConvertMatrixFormat(Matrix<float> *m1, cv::Mat& M1, float **data = NULL);
+void ConvertMatrixMat(cv::Mat& M1, Matrix<float>* m);
+void ConvertVectorMat(cv::Mat& M1, Vector<float>* m);
 // multiply two matrices
 Matrix<float> *MultMatrices(Matrix<float> *m1, Matrix<float> *m2);
-
 // invert matrix
 Matrix<float> *InvMatrix(Matrix<float> *m);
-
 // transpose matrix
 Matrix<float> *TransposeMatrix(Matrix<float> *m);
-
-
 
 #endif

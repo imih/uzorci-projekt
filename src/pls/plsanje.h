@@ -13,10 +13,10 @@ using std::set;
 using texture::TextBlock;
 using hog::HOGBlock;
 
+// returns the what blocks to use for the first stage 
 void plsPerBlock(vector<vector <TextBlock> >&, vector<vector <TextBlock> >&, set<int>&,
     vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&, set<int>&);
 
-/*
-void plsFull(Model&, int, vector<vector <TextBlock> >&, vector<vector <TextBlock> >&,
-    vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&);
-    */
+// returns the what blocks to use for the second stage and how many features overall
+void plsFull(int, vector<vector <TextBlock> >&, vector<vector <TextBlock> >&, set<int>&,
+    vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&, set<int>&);

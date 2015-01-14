@@ -26,7 +26,7 @@ using namespace cv;
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
 const bool readFeatFromFile = false;
-const bool writeFeatToFile = true;
+const bool writeFeatToFile = false;
 const int maxlen = 2048;
 
 // window size is fixed: 64 x 128
@@ -72,10 +72,7 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
   vector<HOGBlock> ret;
   calc_features(image, ret);
   return ret;
-}
-
-int main(int argc, char** argv) {
-  //have posImNodes and negImNodes now
+} int main(int argc, char** argv) { //have posImNodes and negImNodes now
 
   puts("Getting features...pos...");
   vector<vector<TextBlock> > perBlockPosTex;
@@ -85,9 +82,20 @@ int main(int argc, char** argv) {
 
   if(readFeatFromFile) {
     readTex(perBlockPosTex, 1);
+    clock_t endPos = clock();
+    printf("1/4 t:%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
     readHog(perBlockPosHog, 1);
+    endPos = clock();
+    printf("2/4 t:%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
+    puts("neg...");
     readTex(perBlockNegTex, 0);
+    endPos = clock();
+    printf("3/4 t:%0.3lfs\n",
+        double(endPos - begin) / CLOCKS_PER_SEC);
     readHog(perBlockNegHog, 0);
+    endPos = clock();
+    printf("4/4 t:%0.3lfs\n",
+        double(endPos - begin) / CLOCKS_PER_SEC);
   } else {
     getTrainingSet();
     for(int im = 0; im < (int) posImNodes.size(); ++im) {
@@ -101,7 +109,7 @@ int main(int argc, char** argv) {
 
     if(writeFeatToFile) {
       writeTex(perBlockPosTex, 1);
-    //  writeHog(perBlockPosHog, 1);
+      writeHog(perBlockPosHog, 1);
     }
 
     puts("neg...");
@@ -111,10 +119,9 @@ int main(int argc, char** argv) {
       for(int i = 0; (i + rowWin <= image.rows) && (w <= negSampleSize); i += rowWin) 
         for(int j = 0; (j + colWin <= image.cols) && (w <= negSampleSize); j += colWin) {
           w++;
-          // mozemo extraktat vise negativnih primjera! TODO
           Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
           perBlockNegTex.push_back(getTextFeatures(curWin));
-       //   perBlockNegHog.push_back(getHOGFeatures(curWin));
+          perBlockNegHog.push_back(getHOGFeatures(curWin));
           clock_t endPos = clock();
           printf("%d/%d t:%0.3lfs\n", w, negSampleSize, 
               double(endPos - begin) / CLOCKS_PER_SEC);
@@ -122,38 +129,34 @@ int main(int argc, char** argv) {
     }
     if(writeFeatToFile) {
       writeTex(perBlockNegTex, 0);
-     // writeHog(perBlockNegHog, 0);
+      writeHog(perBlockNegHog, 0);
     }
   }
 
-  puts("done loading  features\n");
+  puts("...done loading  features");
   clock_t endPos = clock();
-  printf("%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
-  waitKey(0);
 
   // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
-  set<int> texChosen, hogChosen;
+  set<int> texChosen1st, hogChosen1st;
   puts("Performing per block analysis...\n"); 
-  plsPerBlock(perBlockPosTex, perBlockNegTex, texChosen,
-      perBlockPosHog, perBlockNegHog, hogChosen);
-  
+  plsPerBlock(perBlockPosTex, perBlockNegTex, texChosen1st,
+      perBlockPosHog, perBlockNegHog, hogChosen1st);
+
   //cross validate:
   //1) n_factors - stage 1 (jel potrebno? ne znam)
-  
   //2) n_factors - stage 2
 
-
-  /*
-  Model m;
   int n_factors_full;
-  plsFull(m, n_factors_full, perBlockPosTex, perBlockPosTex, perBlockPosHog, perBlockPosTex);
+  set<int> texChosen2nd, hogChosen2nd;
+  puts("Performing full pls analysis...\n");
+  plsFull(n_factors_full, perBlockPosTex, perBlockNegTex, texChosen2nd, perBlockPosHog, 
+      perBlockNegHog, hogChosen2nd);
 
-  */
   /*
-
      CvSVM SVM;
      SVM.train_auto(mpos + mneg,  ypos + yneg, Mat(), Mat(), params);
-  //write ALL parameters to file
+     - write ALL parameters to file
+     - test the model
   */
 
   return 0;
