@@ -233,9 +233,6 @@ class Matrix { // matrix is column based
 
   // clear structures
   ~Matrix() { 
-    if(realp) {
-      delete this->realp; 
-    }
     this->realp = NULL;
     this->m = NULL;
     this->r = -1;

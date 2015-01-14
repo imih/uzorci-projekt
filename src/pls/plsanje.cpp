@@ -55,13 +55,13 @@ vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block,
   int t_id = 0, h_id = 0;
   for(int i = 0; i < block; ++i) {
     if(order) {
-    pair<char, int> cur = allBlocks[i];
-    if(cur.first == 't') {
-      for(int j = 0; j < t[cur.second].f.n; ++j) 
-        ret.push_back(t[cur.second].f.GetElement(j));
-    } else {
-      for(int j = 0; j < h[cur.second].f.n; ++j)
-        ret.push_back(h[cur.second].f.GetElement(j)); }
+      pair<char, int> cur = allBlocks[i];
+      if(cur.first == 't') {
+        for(int j = 0; j < t[cur.second].f.n; ++j) 
+          ret.push_back(t[cur.second].f.GetElement(j));
+      } else {
+        for(int j = 0; j < h[cur.second].f.n; ++j)
+          ret.push_back(h[cur.second].f.GetElement(j)); }
     } else {
       if(t_id != (int) t.size()) {
         for(int j = 0; j < t[t_id].f.n; ++j) 
@@ -229,11 +229,11 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   for(int k = 0; k < 10; ++k) {
     //chose subset of blocks you want to have in the 1st stage using 
     //10-fold cross validation  
+    // ne treba pls
     for(int i = 0; i < 8; ++i) {
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
           posTex, negTex, posHog, negHog, true);
-      //ajmo prvo bez pls (ostatak TODO )
-      svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
+      svm.train(trainRes, trainRes, Mat(), Mat(), svmparams);
       svm.predict(valData, valH);
       double err = errCnt(valH, valRes);
       avgScore[i] += err;
@@ -282,33 +282,31 @@ void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex,
 
   //10-fold cross validation  
   int blocks_no = (int) posTex[0].size() + (int) posHog[0].size();
-    for(int k = 0; k < 10; ++k) {
-      for(int i = 0; i < 13; ++i) {
-        splitSample(trainData, trainRes, valData, valRes, blocks_no, k, posTex, negTex, 
-            posHog, negHog);
+  for(int k = 0; k < 10; ++k) {
+    for(int i = 0; i < 13; ++i) {
+      splitSample(trainData, trainRes, valData, valRes, blocks_no, k, posTex, negTex, 
+          posHog, negHog);
 
-        Matrix<float>* mTrain;
-        ConvertMatrixMat(trainData, mTrain);
-        Vector<float>* mVal;
-        ConvertVectorMat(valData, mVal);
-        model.CreatePLSModel(mTrain, mVal, nfactors[i]);
+      Matrix<float>* mTrain;
+      ConvertMatrixMat(trainData, mTrain);
+      Vector<float>* mVal;
+      ConvertVectorMat(valData, mVal);
+      model.CreatePLSModel(mTrain, mVal, nfactors[i]);
 
-        Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
-        Matrix<float>* mValid;
-        ConvertMatrixMat(valData, mValid);
-        Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
+      Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
+      Matrix<float>* mValid;
+      ConvertMatrixMat(valData, mValid);
+      Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
 
-        Mat tD;
-        ConvertMatrixFormat(plsmTrain, tD);
-        svm.train(tD, trainRes, Mat(), Mat(), svmparams);
+      ConvertMatrixFormat(plsmTrain, trainData);
+      svm.train(trainRes, trainRes, Mat(), Mat(), svmparams);
 
-        Mat vD;
-        ConvertMatrixFormat(plsmValid, vD);
-        svm.predict(vD, valH);
-        double err = errCnt(valH, valRes);
-        avgScore[i] += err;
-      }
+      ConvertMatrixFormat(plsmValid, valData);
+      svm.predict(valData, valH);
+      double err = errCnt(valH, valRes);
+      avgScore[i] += err;
     }
+  }
 
   n_factors_best = nfactors[min_element(avgScore.begin(), avgScore.end()) - avgScore.begin()];
   //TODO ne znam dobiti samo one blokove koji se koriste  za pls!
