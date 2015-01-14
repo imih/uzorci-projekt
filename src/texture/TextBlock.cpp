@@ -129,7 +129,8 @@ namespace texture {
         }
       }
 
-    f_[11] = (f_[8] - hxy1) / max(hx, hy);
+    if(fabs(max(hx, hy)) > 10e-6)
+      f_[11] = (f_[8] - hxy1) / max(hx, hy);
     f_[12] = sqrt(1 - exp(-2 * hxy2 - f_[8]));
 
     if(f.n == 0)

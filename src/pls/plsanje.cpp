@@ -27,16 +27,7 @@ double getVip(Model& model) { double ret1 = 0, ret2 = 0;
   return sqrt(ret1 * model.nfeatures  / ret2);
 }
 
-vector<double> tvip;
-bool cmpTexBlock(const TextBlock& a, const TextBlock& b){
-  return tvip[a.block_id] > tvip[b.block_id];
-}
-
-vector<double> hvip;
-bool cmpHogBlock(const HOGBlock& a, const HOGBlock& b) {
-  return hvip[a.block_id] > hvip[b.block_id];
-}
-
+vector<double> tvip, hvip;
 vector<pair<char, int> > allBlocks;
 double getVal(const pair<char, int>& a) {
   if(a.first == 't')
@@ -51,8 +42,17 @@ bool cmpAllBlocks(const pair<char, int>& a, const pair<char, int>& b) {
 }
 
 vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block) {
-  //TODO
   vector<float> ret;
+  for(int i = 0; i < block; ++i) {
+    pair<char, int> cur = allBlocks[i];
+    if(cur.first == 't') {
+      for(int j = 0; j < t[cur.second].f.n; ++j) 
+        ret.push_back(t[cur.second].f.GetElement(j));
+    } else {
+      for(int j = 0; j < h[cur.second].f.n; ++j)
+        ret.push_back(h[cur.second].f.GetElement(j));
+    }
+  }
   return ret;
 }
 
@@ -114,9 +114,16 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
   last += Nval;
 }
 
-float errCnt(Mat& h, Mat& y) {
-  //jednostupcane matrice TODO
-  return 0;
+double errCnt(Mat& h, Mat& y) {
+  int n = h.rows;
+  double ret = 0;
+  for(int i = 0; i < n; ++i) {
+    if(fabs(fabs(y.at<float>(i, 0) - h.at<float>(i, 0)) - 10e-6) > 10e-6)
+      ret +=  (y.at<float>(i, 0) - h.at<float>(i, 0)) * 
+        log(fabs(y.at<float>(i, 0) - h.at<float>(i, 0)));
+  }
+
+  return ret;
 }
 
 void plsPerBlock(vector<vector<TextBlock> >& posTex, 
@@ -172,16 +179,7 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   }
 
   //**************************************************************
-  //sort every row by vip score
-  for(int i = 0; i < pnt; ++i)
-    sort(posTex[i].begin(), posTex[i].end(), cmpTexBlock);
-  for(int i = 0; i < nnt; ++i) 
-    sort(negTex[i].begin(), negTex[i].end(), cmpTexBlock);
-  for(int i = 0; i < pnh; ++i)
-    sort(posHog[i].begin(), posHog[i].end(), cmpHogBlock);
-  for(int i = 0; i < nnh; ++i)
-    sort(negHog[i].begin(), negHog[i].end(), cmpHogBlock);
-
+  //sort all blocks by vip score
   for(int i = 0; i < posTex[0].size(); ++i) 
     allBlocks.push_back(make_pair('t', i));
   for(int i = 0; i < posHog[0].size(); ++i)
@@ -216,17 +214,16 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     //10-fold cross validation  
     //ajmo prvo bez pls (ostatak TODO )
     for(int i = 0; i < 8; ++i) {
-      Mat trainData, trainRes, valData, valRes, valH;
-      splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
+      Mat trainData, trainRes, valData, valRes, valH; splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
           posTex, negTex, posHog, negHog);
       svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
       svm.predict(valData, valH);
-      float err = errCnt(valH, valRes);
+      double err = errCnt(valH, valRes);
       avgScore[i] += err;
     }
   }
 
-  int bestBlock = posBlockSizes[max_element(avgScore.begin(), avgScore.end()) 
+  int bestBlock = posBlockSizes[min_element(avgScore.begin(), avgScore.end()) 
     - avgScore.begin()];
   chosenT.clear();
   chosenH.clear();
@@ -240,3 +237,12 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
   return;
 }
+
+/*
+void plsFull(Model& m, int n_factors_best, vector<vector<TextBlock> >& posTex, 
+    vector<vector<TextBlock> >& negTex, vector<vector<HOGBlock> >& posHog, 
+    vector<vector<HOGBlock> >& negHog) {
+  //TODO
+  //chhose n_factors for 2nd stage
+}
+*/

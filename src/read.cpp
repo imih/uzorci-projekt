@@ -53,7 +53,6 @@ void writeFile(vector<vector<T> >& v, string fileName) {
   int blocks = (int) v[0].size();
 
   ofstream file(fileName.c_str());
-  vector<string> blocksS;
   for(int i = 0; i < samples; ++i) {
     vector<string> feats;
     for(int j = 0; j < blocks; ++j) {
@@ -63,10 +62,9 @@ void writeFile(vector<vector<T> >& v, string fileName) {
       }
       feats.push_back(join(f, " "));
     }
-    blocksS.push_back(join(feats, "\t"));
+    file << join(feats, "\t") << std::endl;
   }
 
-  file << join(blocksS, "\n");
   file.close();
 }
 

@@ -16,3 +16,7 @@ using hog::HOGBlock;
 void plsPerBlock(vector<vector <TextBlock> >&, vector<vector <TextBlock> >&, set<int>&,
     vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&, set<int>&);
 
+/*
+void plsFull(Model&, int, vector<vector <TextBlock> >&, vector<vector <TextBlock> >&,
+    vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&);
+    */
