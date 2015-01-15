@@ -32,7 +32,7 @@ const int maxlen = 2048;
 // window size is fixed: 64 x 128
 const int colWin = 64;
 const int rowWin = 128;
-const int negSampleSize = 10000;
+const int negSampleSize = 10;
 
 struct ImNode {
   string fileName;
@@ -98,7 +98,7 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
         double(endPos - begin) / CLOCKS_PER_SEC);
   } else {
     getTrainingSet();
-    for(int im = 0; im < (int) posImNodes.size(); ++im) {
+    for(int im = 0; im < min(10, (int) posImNodes.size()); ++im) {
       Mat curWin = cv::imread(posImNodes[im].fileName, 1); //BGR
       perBlockPosTex.push_back(getTextFeatures(curWin));
       //perBlockPosHog.push_back(getHOGFeatures(curWin)); 
@@ -157,7 +157,7 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
      SVM.train_auto(mpos + mneg,  ypos + yneg, Mat(), Mat(), params);
      - write ALL parameters to file
      - test the model
-  */
+   */
 
   return 0;
 }

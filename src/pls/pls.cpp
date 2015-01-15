@@ -9,10 +9,6 @@
 #include "pls.h"
 #include <math.h>
 
-
-
-
-
 void PLS::normaliz(Vector<float> *vector, Vector<float> *retvector) {
 double sqr = 0;
 float  sqrr; 
@@ -238,7 +234,6 @@ float *ptM, *ptmean, *ptstd;
 void PLS::ComputeWstar() {
 Matrix<float> *tmp1, *tmp2, *tmp3;
 
-	
 	//Wstar=W*inv(P'*W);
 	tmp1 = TransposeMatrix(P);
 	tmp2 = MultMatrices(tmp1, W);
@@ -249,8 +244,6 @@ Matrix<float> *tmp1, *tmp2, *tmp3;
 	delete tmp2;
 	delete tmp3;
 }
-
-
 
 void PLS::zscore(Vector<float> *M, Vector<float> *mean, Vector<float> *std) {
 int i;
@@ -264,350 +257,331 @@ float *ptM, *ptmean, *ptstd;
 	}
 }
 
-
-
-
 void PLS::runpls(Matrix<float> *X, Vector<float> *Y, int nfactor, char *OutputDir, float ExplainedX, float ExplainedY) {
-float  c; // vectors
-int i, j;
-float b_l, tmpscalar;  // scalars
-int kk;
-float dt=0;
-int maxsteps, step;
-int nsamples, nfeatures;
-Vector<float> *t, *u, *t0, *Vcol, *Vrow, *w, *p, *C;
-Matrix<float> *U;
-Vector<float> *ymean, *ystd;
-double sumX2, sumY2, percX, percY, percAux, cumsum, cumsumY;
-Matrix<float> *tmpM;
-Vector<float> *tmpV;
-vector<int> selectedCols;
+  float  c; // vectors
+  int i, j;
+  float b_l, tmpscalar;  // scalars
+  int kk;
+  float dt=0;
+  int maxsteps, step;
+  int nsamples, nfeatures;
+  Vector<float> *t, *u, *t0, *Vcol, *Vrow, *w, *p, *C;
+  Matrix<float> *U;
+  Vector<float> *ymean, *ystd;
+  double sumX2, sumY2, percX, percY, percAux, cumsum, cumsumY;
+  Matrix<float> *tmpM;
+  Vector<float> *tmpV;
+  vector<int> selectedCols;
 
-	// initially, clear current PLS model (if there is one)
-	ClearPLS();
+  // initially, clear current PLS model (if there is one)
+  ClearPLS();
 
-	nsamples = X->GetNRows();
-	nfeatures = X->GetNCols();
+  nsamples = X->GetNRows();
+  nfeatures = X->GetNCols();
 
+  Yorig = new Vector<float> (nsamples);
+  CopyVector(Y, Yorig);
 
-	Yorig = new Vector<float> (nsamples);
-	CopyVector(Y, Yorig);
+  maxsteps = 100;
 
-	maxsteps = 100;
+  Xmean = new Vector<float> (nfeatures);
+  Xstd = new Vector<float> (nfeatures);
 
-	Xmean = new Vector<float> (nfeatures);
-	Xstd = new Vector<float> (nfeatures);
-
-	mean(X, Xmean);
-	std(X, Xmean, Xstd);
-	zscore(X, Xmean, Xstd); 
+  mean(X, Xmean);
+  std(X, Xmean, Xstd);
+  zscore(X, Xmean, Xstd); 
 #if 0
-	mean = umd_mean(X, rX, cX);
-	printf("Finished means\n");
-	std = umd_std(X, mean, rX, cX);
-	printf("Finished std\n");
-	umd_zscore(X, mean, std, rX, cX);
-    printf("Finished z-scores\n");
+  mean = umd_mean(X, rX, cX);
+  printf("Finished means\n");
+  std = umd_std(X, mean, rX, cX);
+  printf("Finished std\n");
+  umd_zscore(X, mean, std, rX, cX);
+  printf("Finished z-scores\n");
 #endif
 
 
 
-	//Xmean->Write("Xmean.matrix");
-	//Xstd->Write("Xstd.matrix");
+  //Xmean->Write("Xmean.matrix");
+  //Xstd->Write("Xstd.matrix");
 
 
 
-    // write std and mean
- //   WriteMatrix(mean, 1, cX, "Xmean.matrix");
- //   WriteMatrix(std, 1, cX, "Xstd.matrix");
-        
-	// Y
-	ymean = new Vector<float> (1);
-	ystd = new Vector<float> (1);
-	mean(Y, ymean);
-	std(Y, ymean, ystd);
-	zscore(Y, ymean, ystd);
-//	mean = umd_mean(Y, rY, cY);
-//	std = umd_std(Y, mean, rY, cY);
-//	umd_zscore(Y, mean, std, rY, cY);
-    
-    // write std and mean
-    //WriteMatrix(mean, 1, cY, "Ymean.matrix");
-    //WriteMatrix(std, 1, cY, "Ystd.matrix");
+  // write std and mean
+  //   WriteMatrix(mean, 1, cX, "Xmean.matrix");
+  //   WriteMatrix(std, 1, cX, "Xstd.matrix");
+
+  // Y
+  ymean = new Vector<float> (1);
+  ystd = new Vector<float> (1);
+  mean(Y, ymean);
+  std(Y, ymean, ystd);
+  zscore(Y, ymean, ystd);
+  //	mean = umd_mean(Y, rY, cY);
+  //	std = umd_std(Y, mean, rY, cY);
+  //	umd_zscore(Y, mean, std, rY, cY);
+
+  // write std and mean
+  //WriteMatrix(mean, 1, cY, "Ymean.matrix");
+  //WriteMatrix(std, 1, cY, "Ystd.matrix");
 
 
 
 
 
-	//u = NULL;
-	//t0 = NULL;
-	//U = umd_allocateMatrix(rX, nfactor);
-	//C = umd_allocateVector(nfactor);
-	//T = umd_allocateMatrix(rX, nfactor);
-	//P = umd_allocateMatrix(cX, nfactor);
-	//W = umd_allocateMatrix(cX, nfactor);
-	//b = umd_allocateVector(nfactor);
-	
-	U = new Matrix<float> (nsamples, nfactor);
-	C = new Vector<float> (nfactor);
-	T = new Matrix<float> (nsamples, nfactor);
-	P = new Matrix<float> (nfeatures, nfactor);
-	W = new Matrix<float> (nfeatures, nfactor);
-	b = new Vector<float> (nfactor);
+  //u = NULL;
+  //t0 = NULL;
+  //U = umd_allocateMatrix(rX, nfactor);
+  //C = umd_allocateVector(nfactor);
+  //T = umd_allocateMatrix(rX, nfactor);
+  //P = umd_allocateMatrix(cX, nfactor);
+  //W = umd_allocateMatrix(cX, nfactor);
+  //b = umd_allocateVector(nfactor);
+
+  U = new Matrix<float> (nsamples, nfactor);
+  C = new Vector<float> (nfactor);
+  T = new Matrix<float> (nsamples, nfactor);
+  P = new Matrix<float> (nfeatures, nfactor);
+  W = new Matrix<float> (nfeatures, nfactor);
+  b = new Vector<float> (nfactor);
 
 
-	t = new Vector<float> (nsamples);
-	u = new Vector<float> (nsamples);
-	t0 = new Vector<float> (nsamples);
-	Vcol = new Vector<float> (nfeatures);
-	Vrow = new Vector<float> (nsamples);
-	w = new Vector<float> (nfeatures);
-	p = new Vector<float> (nfeatures);
+  t = new Vector<float> (nsamples);
+  u = new Vector<float> (nsamples);
+  t0 = new Vector<float> (nsamples);
+  Vcol = new Vector<float> (nfeatures);
+  Vrow = new Vector<float> (nsamples);
+  w = new Vector<float> (nfeatures);
+  p = new Vector<float> (nfeatures);
 
 
-	// compute square of the sum of X and Y
-	sumY2 = 0;
-	sumX2 = 0;
-	for (i = 0; i < Y->GetNElements(); i++) {
-		sumY2 += (double) (Y->GetElement(i) * Y->GetElement(i));
-	}
+  // compute square of the sum of X and Y
+  sumY2 = 0;
+  sumX2 = 0;
+  for (i = 0; i < Y->GetNElements(); i++) {
+    sumY2 += (double) (Y->GetElement(i) * Y->GetElement(i));
+  }
 
-	for (i = 0; i < X->GetNCols(); i++) {
-		for (j = 0; j < X->GetNRows(); j++) {
-			sumX2 += (double) (X->GetElement(i, j) * X->GetElement(i, j));
-		}
-	}
+  for (i = 0; i < X->GetNCols(); i++) {
+    for (j = 0; j < X->GetNRows(); j++) {
+      sumX2 += (double) (X->GetElement(i, j) * X->GetElement(i, j));
+    }
+  }
 
+  //printf("\rsumX: %5.3f, sumY: %5.3f", sumX2, sumY2);
+  cumsum = 0;
+  cumsumY = 0;
 
-	//printf("\rsumX: %5.3f, sumY: %5.3f", sumX2, sumY2);
-	cumsum = 0;
-	cumsumY = 0;
+  for (i = 0; i < nfactor; i++) {
+    normaliz(Y, t);
+    CopyVector(t, u);
 
-	for (i = 0; i < nfactor; i++) {
+    step = 0;
+    do {
+      //printf("new while loop, iteration %d\n", step);
+      //if (t0 != NULL)
+      //	free(t0);
 
-		normaliz(Y, t);
-		CopyVector(t, u);
+      //t0 = CopyVector(t, rY);
+      CopyVector(t, t0);
 
-		step = 0;
-                do {
-			//printf("new while loop, iteration %d\n", step);
-			//if (t0 != NULL)
-			//	free(t0);
+      // w=normaliz(Xres'*u)
+      //tmp = MultiplyTransposeMatrixbyVector(X, rX, cX, u, rY);
+      //w = normaliz(tmp, cX);
+      //free(tmp);
+      MultiplyTransposeMatrixbyVector(X, u, Vcol);
+      normaliz(Vcol, w);
 
-        	//t0 = CopyVector(t, rY);
-			CopyVector(t, t0);
-
-			// w=normaliz(Xres'*u)
-			//tmp = MultiplyTransposeMatrixbyVector(X, rX, cX, u, rY);
-        	//w = normaliz(tmp, cX);
-			//free(tmp);
-			MultiplyTransposeMatrixbyVector(X, u, Vcol);
-			normaliz(Vcol, w);
-
-			// t=normaliz(Xres*w);
-			//tmp = MultiplyMatrixbyVector(X, rX, cX, w, cX);
-			//free(t);
-			//t = normaliz(tmp, rX);
-			//free(tmp);
-			MultiplyMatrixbyVector(X, w, Vrow);
-			normaliz(Vrow, t);
+      // t=normaliz(Xres*w);
+      //tmp = MultiplyMatrixbyVector(X, rX, cX, w, cX);
+      //free(t);
+      //t = normaliz(tmp, rX);
+      //free(tmp);
+      MultiplyMatrixbyVector(X, w, Vrow);
+      normaliz(Vrow, t);
 
 
-			// c = normaliz(Yres'*t); c is 1xrY
-			//tmpscalar = MultiplyVectorTransposedbyVector(Y, rY, t);
-			//c = normaliz(&tmpscalar, 1);
-			tmpscalar = MultiplyVectorTransposedbyVector(Y, t);
-			c = tmpscalar/tmpscalar;  //dummy step, because it normalizes a constant
-			
-			// u=Yres*c
-			//free(u);
-			//u = MultiplyVectorandScalar(Y, rY, c[0]);
-			MultiplyVectorandScalar(Y, c, u);
-			
+      // c = normaliz(Yres'*t); c is 1xrY
+      //tmpscalar = MultiplyVectorTransposedbyVector(Y, rY, t);
+      //c = normaliz(&tmpscalar, 1);
+      tmpscalar = MultiplyVectorTransposedbyVector(Y, t);
+      c = tmpscalar/tmpscalar;  //dummy step, because it normalizes a constant
+
+      // u=Yres*c
+      //free(u);
+      //u = MultiplyVectorandScalar(Y, rY, c[0]);
+      MultiplyVectorandScalar(Y, c, u);
+
+      dt = 0;
+      for (kk = 0; kk < nsamples; kk++) {
+        dt += (t0->GetElement(kk) - t->GetElement(kk)) * (t0->GetElement(kk) - t->GetElement(kk));
+      }
+      if (cvIsNaN((double)dt)) {
+        printf("\nproblem during PLS: NaN\n");
+        exit(2);
+      }
+      //printf("t - t0: %f\n", dt);
+
+      step++;
+    } while (dt>0.000001 && step<maxsteps);
+
+    // p=Xres'*t; p is cX by 1
+    //p = MultiplyTransposeMatrixbyVector(X, rX, cX, t, rX);
+    MultiplyTransposeMatrixbyVector(X, t, p);
+
+    // b_l=((t'*t)^(-1))*(u'*t); // ||t|| = 1
+    b_l = MultiplyVectorTransposedbyVector(u, t);
+
+    // store matrices
+    //b[i] = b_l;
+    b->SetElement(i, b_l);
+
+    for (j = 0; j < nfeatures; j++) {
+      P->SetValue(i, j, p->GetElement(j));
+      W->SetValue(i, j, w->GetElement(j));
+    }
+    //for (j = 0; j < cX; j++) {
+    // 	WMELEM(P, j, i, p[j], nfactor);
+    //	WMELEM(W, j, i, w[j], nfactor);
+    //}
+
+    for (j = 0; j < nsamples; j++) {
+      T->SetValue(i, j, t->GetElement(j));
+      U->SetValue(i, j, u->GetElement(j));
+    }
+
+    //for (j = 0; j < rX; j++) {
+    //	WMELEM(T, j, i, t[j], nfactor);
+    //	WMELEM(U, j, i, u[j], nfactor);
+    //}
+
+    C->SetElement(i, c);
+
+    //C[i] = c[j];
+    // deflation of X and Y
+    // Xres=Xres-t*p';
+    //SubtractFromMatrix(X, rX, cX, t, rX, p, cX);
+    SubtractFromMatrix(X, t, p);
+
+    // Yres=Yres-(b(l)*(t*c'));
+    //SubtractFromVector(Y, rY, t, rX, c, 1, b[i]);
+    SubtractFromVector(Y, t, c, b->GetElement(i));
+
+    //sprintf(str,"Y%.4d.matrix", i+1);
+    //        WriteMatrix(Y, rY, 1, str);      
 
 
-			dt = 0;
-            for (kk = 0; kk < nsamples; kk++) {
-				dt += (t0->GetElement(kk) - t->GetElement(kk)) * (t0->GetElement(kk) - t->GetElement(kk));
-			}
-			if (cvIsNaN((double)dt)) {
-				printf("\nproblem during PLS: NaN\n");
-				exit(2);
-			}
-            //printf("t - t0: %f\n", dt);
-                       
- 			step++;
-		} while (dt>0.000001 && step<maxsteps);
-		
-		// p=Xres'*t; p is cX by 1
-		//p = MultiplyTransposeMatrixbyVector(X, rX, cX, t, rX);
-		MultiplyTransposeMatrixbyVector(X, t, p);
+    // get percentage explained in X
+    percX = 0;
+    percY = 0;
+    percAux = 0;
+    //#if 0
+    for (j = 0; j < T->GetNRows(); j++) {
+      percAux += (double) (T->GetElement(i, j) * T->GetElement(i, j));
+    }
+    for (j = 0; j < P->GetNRows(); j++) { 
+      percY += (double) (P->GetElement(i, j) * P->GetElement(i, j));
+    }
+    percX = (percAux * percY) / sumX2;
+    percY = (percAux * (double) (b->GetElement(i) * b->GetElement(i))) / sumY2;
+    cumsum += percX;
+    cumsumY += percY;
+
+    if (cumsum >= ExplainedX) {
+      printf("reached percentage explained of X variable, stopping\n");
+      nfactor = i + 1;
+      break;
+    }
+    if (cumsum >= ExplainedY) {
+      printf("reached percentage explained of Y variable, stopping\n");
+      nfactor = i + 1;
+      break;
+    }
 
 
-		// b_l=((t'*t)^(-1))*(u'*t); // ||t|| = 1
-		b_l = MultiplyVectorTransposedbyVector(u, t);
+    //#endif
+    // Debug
+    //fprintf(stdout,"End of iteration %2.2d (explained X: %5.3f, Y: %5.3f) cumsum: %5.3f cumsumY: %5.3f\n", i, percX, percY, cumsum, cumsumY);
+  }
 
-		// store matrices
-		//b[i] = b_l;
-		b->SetElement(i, b_l);
-	
-		for (j = 0; j < nfeatures; j++) {
-			P->SetValue(i, j, p->GetElement(j));
-			W->SetValue(i, j, w->GetElement(j));
-		}
-		//for (j = 0; j < cX; j++) {
-	   // 	WMELEM(P, j, i, p[j], nfactor);
-    	//	WMELEM(W, j, i, w[j], nfactor);
-		//}
+  //printf("\n");
 
-		for (j = 0; j < nsamples; j++) {
-			T->SetValue(i, j, t->GetElement(j));
-			U->SetValue(i, j, u->GetElement(j));
-		}
+  // saving only number of factors actually used
+  for (i = 0; i < nfactor; i++) {
+    selectedCols.push_back(i);
+  }
 
-		//for (j = 0; j < rX; j++) {
-		//	WMELEM(T, j, i, t[j], nfactor);
-    	//	WMELEM(U, j, i, u[j], nfactor);
-		//}
+  tmpM = T->GetSelectedCols(&selectedCols);
+  delete T;
+  T = tmpM;
 
-		C->SetElement(i, c);
+  tmpM = P->GetSelectedCols(&selectedCols);
+  delete P;
+  P = tmpM;
 
-		//C[i] = c[j];
+  tmpM = W->GetSelectedCols(&selectedCols);
+  delete W;
+  W = tmpM;
 
-		
-		
+  tmpV = b->SelectElements(&selectedCols);
+  delete b;
+  b = tmpV;
 
-	    // deflation of X and Y
-		// Xres=Xres-t*p';
-		//SubtractFromMatrix(X, rX, cX, t, rX, p, cX);
-		SubtractFromMatrix(X, t, p);
+  //T->Write("T.matrix");
+  //W->Write("W.matrix");
+  //P->Write("P.matrix");
+  //b->Write("b.matrix");
+  //Yorig->Write("Y.matrix");
+  // write T, W, and P
+  //WriteMatrix(T, rX, nfactor, "T.matrix");
+  //WriteMatrix(W, cX, nfactor, "W.matrix");
+  //WriteMatrix(P, cX, nfactor, "P.matrix");
 
-		// Yres=Yres-(b(l)*(t*c'));
-		//SubtractFromVector(Y, rY, t, rX, c, 1, b[i]);
-		SubtractFromVector(Y, t, c, b->GetElement(i));
-
-		//sprintf(str,"Y%.4d.matrix", i+1);
-        //        WriteMatrix(Y, rY, 1, str);      
-
-
-		// get percentage explained in X
-		percX = 0;
-		percY = 0;
-		percAux = 0;
-//#if 0
-		for (j = 0; j < T->GetNRows(); j++) {
-			percAux += (double) (T->GetElement(i, j) * T->GetElement(i, j));
-		}
-		for (j = 0; j < P->GetNRows(); j++) { 
-			percY += (double) (P->GetElement(i, j) * P->GetElement(i, j));
-		}
-		percX = (percAux * percY) / sumX2;
-		percY = (percAux * (double) (b->GetElement(i) * b->GetElement(i))) / sumY2;
-		cumsum += percX;
-		cumsumY += percY;
-
-		if (cumsum >= ExplainedX) {
-			printf("reached percentage explained of X variable, stopping\n");
-			nfactor = i + 1;
-			break;
-		}
-		if (cumsum >= ExplainedY) {
-			printf("reached percentage explained of Y variable, stopping\n");
-			nfactor = i + 1;
-			break;
-		}
-			
-
-//#endif
-		// Debug
-		//fprintf(stdout,"End of iteration %2.2d (explained X: %5.3f, Y: %5.3f) cumsum: %5.3f cumsumY: %5.3f\n", i, percX, percY, cumsum, cumsumY);
-	}
-
-	//printf("\n");
-
-	// saving only number of factors actually used
-	for (i = 0; i < nfactor; i++) {
-		selectedCols.push_back(i);
-	}
+  // compute Wstar
+  //	printf("antes 1\n");
+  ComputeWstar();
+  //Wstar = W->Copy();
+  //printf("depois 1\n");
 
 
-	tmpM = T->GetSelectedCols(&selectedCols);
-	delete T;
-	T = tmpM;
-
-	tmpM = P->GetSelectedCols(&selectedCols);
-	delete P;
-	P = tmpM;
-
-	tmpM = W->GetSelectedCols(&selectedCols);
-	delete W;
-	W = tmpM;
-
-	tmpV = b->SelectElements(&selectedCols);
-	delete b;
-	b = tmpV;
+  // create auxiliar vector for zscore
+  zdataV = new Vector<float>(Wstar->GetNRows());
 
 
+  // set max number of factors
+  this->maxFactors = this->Wstar->GetNCols();
 
-	//T->Write("T.matrix");
-	//W->Write("W.matrix");
-	//P->Write("P.matrix");
-	//b->Write("b.matrix");
-	//Yorig->Write("Y.matrix");
-
-
-
-	// write T, W, and P
-	//WriteMatrix(T, rX, nfactor, "T.matrix");
-	//WriteMatrix(W, cX, nfactor, "W.matrix");
-	//WriteMatrix(P, cX, nfactor, "P.matrix");
-
-	// compute Wstar
-	//	printf("antes 1\n");
-	ComputeWstar();
-	//Wstar = W->Copy();
-	//printf("depois 1\n");
-
-
-	// create auxiliar vector for zscore
-	zdataV = new Vector<float>(Wstar->GetNRows());
-
-
-	// set max number of factors
-	this->maxFactors = this->Wstar->GetNCols();
-
-	// free memory
-	delete u;
-	delete t0;
-	delete Vcol;
-	delete Vrow;
-	delete w;
-	delete p;
-	delete C;
-	delete U;
-	delete ymean;
-	delete ystd;
-	delete t;
+  // free memory
+  delete u;
+  delete t0;
+  delete Vcol;
+  delete Vrow;
+  delete w;
+  delete p;
+  delete C;
+  delete U;
+  delete ymean;
+  delete ystd;
+  delete t;
 }
 
 
 
- 
+
 
 
 
 PLS::PLS() {
 
-	Xmean = NULL;
-	Xstd = NULL;
-	T = NULL;
-	P = NULL;
-	W = NULL;
-	Yorig = NULL;
-	b = NULL;
-	Wstar = NULL;
-	zdataV = NULL;
-	maxFactors = -1;
+  Xmean = NULL;
+  Xstd = NULL;
+  T = NULL;
+  P = NULL;
+  W = NULL;
+  Yorig = NULL;
+  b = NULL;
+  Wstar = NULL;
+  zdataV = NULL;
+  maxFactors = -1;
 }
 
 
@@ -618,26 +592,26 @@ PLS::PLS() {
 
 void PLS::SetMatrices(Matrix<float> *W, Matrix<float> *Wstar, Matrix<float> *P, Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *b) {
 
-	ClearPLS();
+  ClearPLS();
 
-	this->W = W;
-	this->Wstar = Wstar;
-	this->P = P;
-	this->Xmean = Xmean;
-	this->Xstd = Xstd;
-	this->b = b;
-	this->maxFactors = Wstar->GetNCols();
+  this->W = W;
+  this->Wstar = Wstar;
+  this->P = P;
+  this->Xmean = Xmean;
+  this->Xstd = Xstd;
+  this->b = b;
+  this->maxFactors = Wstar->GetNCols();
 
 
-	// create auxiliar vector for zscore
-	zdataV = new Vector<float>(Wstar->GetNRows());
+  // create auxiliar vector for zscore
+  zdataV = new Vector<float>(Wstar->GetNRows());
 }
 
 
 
 PLS::~PLS() {
 
-	ClearPLS();
+  ClearPLS();
 }
 
 
@@ -646,52 +620,52 @@ PLS::~PLS() {
 
 void PLS::ClearPLS() {
 
-	if (Xmean != NULL) {
-		delete Xmean;
-		Xmean = NULL;
-	}
+  if (Xmean != NULL) {
+    delete Xmean;
+    Xmean = NULL;
+  }
 
-	if (Xstd != NULL) {
-		delete Xstd;
-		Xstd = NULL;
-	}
+  if (Xstd != NULL) {
+    delete Xstd;
+    Xstd = NULL;
+  }
 
-	if (P != NULL) {
-		delete P;
-		P = NULL;
-	}
+  if (P != NULL) {
+    delete P;
+    P = NULL;
+  }
 
-	if (W != NULL) {
-		delete W;
-		W = NULL;
-	}
+  if (W != NULL) {
+    delete W;
+    W = NULL;
+  }
 
-	if (Yorig != NULL) {
-		delete Yorig;
-		Yorig = NULL;
-	}
+  if (Yorig != NULL) {
+    delete Yorig;
+    Yorig = NULL;
+  }
 
-	if (T != NULL) {
-		delete T;
-		T = NULL;
-	}
+  if (T != NULL) {
+    delete T;
+    T = NULL;
+  }
 
-	if (b != NULL) {
-		delete b;
-		b = NULL;
-	}
+  if (b != NULL) {
+    delete b;
+    b = NULL;
+  }
 
-	if (Wstar != NULL) {
-		delete Wstar;
-		Wstar = NULL;
-	}
+  if (Wstar != NULL) {
+    delete Wstar;
+    Wstar = NULL;
+  }
 
-	if (zdataV != NULL) {
-		delete zdataV;
-		zdataV = NULL;
-	}
+  if (zdataV != NULL) {
+    delete zdataV;
+    zdataV = NULL;
+  }
 
-	maxFactors = -1;
+  maxFactors = -1;
 }
 
 
@@ -699,30 +673,30 @@ void PLS::ClearPLS() {
 
 void PLS::ClearExtraMatrices() {
 
-	if (T != NULL) {
-		delete T;
-		T = NULL;
-	}
+  if (T != NULL) {
+    delete T;
+    T = NULL;
+  }
 
-	if (P != NULL) {
-		delete P;
-		P = NULL;
-	}
+  if (P != NULL) {
+    delete P;
+    P = NULL;
+  }
 
-	if (Yorig != NULL) {
-		delete Yorig;
-		Yorig = NULL;
-	}
+  if (Yorig != NULL) {
+    delete Yorig;
+    Yorig = NULL;
+  }
 
-	if (W != NULL) {
-		delete W;
-		W = NULL;
-	}
+  if (W != NULL) {
+    delete W;
+    W = NULL;
+  }
 
-	if (b != NULL) {
-		delete b;
-		b = NULL;
-	}
+  if (b != NULL) {
+    delete b;
+    b = NULL;
+  }
 }
 
 
@@ -730,56 +704,56 @@ void PLS::ClearExtraMatrices() {
 
 void PLS::ClearExtraMatricesPLSReg() {
 
-	if (Yorig != NULL) {
-		delete Yorig;
-		Yorig = NULL;
-	}
+  if (Yorig != NULL) {
+    delete Yorig;
+    Yorig = NULL;
+  }
 
-	if (b != NULL) {
-		delete b;
-		b = NULL;
-	}
+  if (b != NULL) {
+    delete b;
+    b = NULL;
+  }
 
-	if (T != NULL) {
-		delete T;
-		T = NULL;
-	}
+  if (T != NULL) {
+    delete T;
+    T = NULL;
+  }
 
-	if (P != NULL) {
-		delete P;
-		P = NULL;
-	}
+  if (P != NULL) {
+    delete P;
+    P = NULL;
+  }
 
-	if (W != NULL) {
-		delete W;
-		W = NULL;
-	}
+  if (W != NULL) {
+    delete W;
+    W = NULL;
+  }
 
-	if (Wstar != NULL) {
-		delete Wstar;
-		Wstar = NULL;
-	}
+  if (Wstar != NULL) {
+    delete Wstar;
+    Wstar = NULL;
+  }
 }
 
 
 
 
 void PLS::Projection(float *feat, float *retproj, int nfactors) {
-int i;
+  int i;
 
-	mat.ZscoreSSE(feat, Xmean->GetData(), Xstd->GetData(), zdataV->GetData(), Wstar->GetNRows());
+  mat.ZscoreSSE(feat, Xmean->GetData(), Xstd->GetData(), zdataV->GetData(), Wstar->GetNRows());
 
 
-	for (i = 0; i < nfactors; i++) {	
-		retproj[i] = mat.DotProductSSENotMultof4(zdataV->GetData(), Wstar->GetColumn(i), Wstar->GetNRows());
-	}
+  for (i = 0; i < nfactors; i++) {	
+    retproj[i] = mat.DotProductSSENotMultof4(zdataV->GetData(), Wstar->GetColumn(i), Wstar->GetNRows());
+  }
 }
 
 
 void PLS::ExecuteZScore(float *feat, float *zscoreResult) {
-	
 
-	mat.ZscoreSSE(feat, Xmean->GetData(), Xstd->GetData(), zscoreResult, Wstar->GetNRows());
+
+  mat.ZscoreSSE(feat, Xmean->GetData(), Xstd->GetData(), zscoreResult, Wstar->GetNRows());
 
 
 }
@@ -790,41 +764,41 @@ void PLS::ExecuteZScore(float *feat, float *zscoreResult) {
 
 
 void PLS::InitializePLSModel(Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *Yorig, Vector<float> *b, Matrix<float> *T, Matrix<float> *P,
-						 Matrix<float> *W, Matrix<float> *Wstar) {
+    Matrix<float> *W, Matrix<float> *Wstar) {
 
-	ClearPLS();
-								
-	if (Xmean != NULL)
-		this->Xmean = Xmean->Copy();
+  ClearPLS();
 
-	if (Xstd != NULL)
-		this->Xstd = Xstd->Copy();
+  if (Xmean != NULL)
+    this->Xmean = Xmean->Copy();
 
-	if (Yorig != NULL) {
-		this->Yorig = Yorig->Copy();
-	}
+  if (Xstd != NULL)
+    this->Xstd = Xstd->Copy();
 
-	if (b != NULL) {
-		this->b = b->Copy();
-	}
-	
-	if (T != NULL) {
-		this->T = T->Copy();
-	}
+  if (Yorig != NULL) {
+    this->Yorig = Yorig->Copy();
+  }
 
-	if (P != NULL) {
-		this->P = P->Copy();
-	}
+  if (b != NULL) {
+    this->b = b->Copy();
+  }
 
-	if (W != NULL) {
-		this->W = W->Copy();
-	}
+  if (T != NULL) {
+    this->T = T->Copy();
+  }
 
-	if (Wstar != NULL) {
-		this->Wstar = Wstar->Copy();
-		// create aux variable
-		zdataV = new Vector<float>(Wstar->GetNRows());
-		// set max number of factors
-		this->maxFactors = this->Wstar->GetNCols();
-	}
+  if (P != NULL) {
+    this->P = P->Copy();
+  }
+
+  if (W != NULL) {
+    this->W = W->Copy();
+  }
+
+  if (Wstar != NULL) {
+    this->Wstar = Wstar->Copy();
+    // create aux variable
+    zdataV = new Vector<float>(Wstar->GetNRows());
+    // set max number of factors
+    this->maxFactors = this->Wstar->GetNCols();
+  }
 }

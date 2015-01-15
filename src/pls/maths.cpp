@@ -103,28 +103,12 @@ int i, n2;
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // convert from my format to OpenCV format
-void ConvertMatrixFormat(Matrix<float>* m1, cv::Mat& M1, float **data) {
+void ConvertMatrixFormat(Matrix<float>* m1, cv::Mat* M1, float **data) {
   float *d1;
   int idx, x, y;
-
-  // copy data to convert to rowwise
+  d1  = (float *) malloc(m1->GetNCols() * m1->GetNRows() * sizeof(float));
+    // copy data to convert to rowwise
   idx = 0;
   for (y = 0; y < m1->GetNRows(); y++) {
     for (x = 0; x < m1->GetNCols(); x++) {
@@ -132,7 +116,7 @@ void ConvertMatrixFormat(Matrix<float>* m1, cv::Mat& M1, float **data) {
     }
   }
 
-  M1 = cv::Mat(m1->GetNRows(), m1->GetNCols(), CV_32F, d1).clone();
+  M1 = new cv::Mat(m1->GetNRows(), m1->GetNCols(), CV_32F, d1);
 }
 
 void ConvertMatrixMat(cv::Mat& M1, Matrix<float>* m) {
@@ -167,9 +151,9 @@ Matrix<float> *MultMatrices(Matrix<float> *m1, Matrix<float> *m2) {
 
   dataRet = new Matrix<float>(m1->GetNRows(), m2->GetNCols());
 
-  ConvertMatrixFormat(m1, M1, &d1);
-  ConvertMatrixFormat(m2, M2, &d2);
-  ConvertMatrixFormat(dataRet, M3, &d3);
+  ConvertMatrixFormat(m1, &M1, &d1);
+  ConvertMatrixFormat(m2, &M2, &d2);
+  ConvertMatrixFormat(dataRet, &M3, &d3);
 
   cvMatMulAdd( &M1, &M2, 0, &M3 );
 
@@ -207,8 +191,8 @@ Matrix<float> *InvMatrix(Matrix<float> *m) {
 
   dataRet = new Matrix<float>(m->GetNRows(), m->GetNCols());
 
-  ConvertMatrixFormat(m, M1, &d1);
-  ConvertMatrixFormat(dataRet, M2, &d2);
+  ConvertMatrixFormat(m, &M1, &d1);
+  ConvertMatrixFormat(dataRet, &M2, &d2);
 
   ret = cvInvert(&M1, &M2);
 
@@ -238,11 +222,10 @@ Matrix<float> *TransposeMatrix(Matrix<float> *m) {
   Matrix<float> *dataRet;
   int x, y, idx;
 
-
   dataRet = new Matrix<float>(m->GetNCols(), m->GetNRows());
 
-  ConvertMatrixFormat(m, M1, &d1);
-  ConvertMatrixFormat(dataRet, M2, &d2);
+  ConvertMatrixFormat(m, &M1, &d1);
+  ConvertMatrixFormat(dataRet, &M2, &d2);
 
   cvTranspose( &M1, &M2 );
 

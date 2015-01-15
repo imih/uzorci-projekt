@@ -174,9 +174,10 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       mNeg->SetRow(&negTex[j][i].f, j);
     }
 
+    puts("creating model");
     model.CreatePLSModel(mPos, mNeg, kBlkFactors);
+    puts("getting vip");
     tvip[i] = getVip(model);
-    delete mPos, mNeg;
   }
 
   int hblocks = (int) posHog[0].size();
@@ -196,7 +197,6 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     }
     model.CreatePLSModel(mPos, mNeg , kBlkFactors);
     hvip[i] = getVip(model);
-    delete mPos, mNeg;
   }
 
   //**************************************************************
@@ -226,15 +226,20 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   vector<double> avgScore(8, 0);
 
   Mat trainData, trainRes, valData, valRes, valH; 
+  puts("performing 10-fold cross validation for stage 1");
   for(int k = 0; k < 10; ++k) {
     //chose subset of blocks you want to have in the 1st stage using 
     //10-fold cross validation  
     // ne treba pls
     for(int i = 0; i < 8; ++i) {
+      printf("...%d %d\n", i, k);
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
           posTex, negTex, posHog, negHog, true);
+      printf("split.");
       svm.train(trainRes, trainRes, Mat(), Mat(), svmparams);
+      printf("trained.");
       svm.predict(valData, valH);
+      printf("predicted.");
       double err = errCnt(valH, valRes);
       avgScore[i] += err;
     }
@@ -298,10 +303,10 @@ void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex,
       ConvertMatrixMat(valData, mValid);
       Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
 
-      ConvertMatrixFormat(plsmTrain, trainData);
+      ConvertMatrixFormat(plsmTrain, &trainData);
       svm.train(trainRes, trainRes, Mat(), Mat(), svmparams);
 
-      ConvertMatrixFormat(plsmValid, valData);
+      ConvertMatrixFormat(plsmValid, &valData);
       svm.predict(valData, valH);
       double err = errCnt(valH, valRes);
       avgScore[i] += err;

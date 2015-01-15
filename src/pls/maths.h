@@ -274,7 +274,7 @@ class Matrix { // matrix is column based
     int i, j, k;
 
     m = new Matrix<T>(this->GetNRows(), (int) selectedcols->size());
-    for (i = 0; i < (int)selectedcols->size(); i++) {
+    for (i = 0; i < (int) selectedcols->size(); i++) {
       j = selectedcols->at(i);
       for (k = 0; k < this->GetNRows(); k++) {
         m->SetValue(i, k, this->GetElement(j, k));
@@ -402,7 +402,7 @@ class Maths {
 // OpenCV functions //
 //////////////////////
 // convert matrix format to openCV format - put data used in opencv format
-void ConvertMatrixFormat(Matrix<float> *m1, cv::Mat& M1, float **data = NULL);
+void ConvertMatrixFormat(Matrix<float> *m1, cv::Mat* M1, float **data = NULL);
 void ConvertMatrixMat(cv::Mat& M1, Matrix<float>* m);
 void ConvertVectorMat(cv::Mat& M1, Vector<float>* m);
 // multiply two matrices
