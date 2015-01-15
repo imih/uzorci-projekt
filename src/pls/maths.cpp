@@ -103,12 +103,15 @@ int i, n2;
 	}
 }
 
-// convert from my format to OpenCV format
-void ConvertMatrixFormat(Matrix<float>* m1, cv::Mat* M1, float **data) {
-  float *d1;
+
+
+void ConvertMatrixFormat(Matrix<float> *m1, CvMat *M1, float **data) {
   int idx, x, y;
-  d1  = (float *) malloc(m1->GetNCols() * m1->GetNRows() * sizeof(float));
-    // copy data to convert to rowwise
+
+  float *d1 = (float *) malloc(m1->GetNCols() * m1->GetNRows() * sizeof(float));
+  *data = d1;
+
+  // copy data to convert to rowwise
   idx = 0;
   for (y = 0; y < m1->GetNRows(); y++) {
     for (x = 0; x < m1->GetNCols(); x++) {
@@ -116,20 +119,34 @@ void ConvertMatrixFormat(Matrix<float>* m1, cv::Mat* M1, float **data) {
     }
   }
 
-  M1 = new cv::Mat(m1->GetNRows(), m1->GetNCols(), CV_32F, d1);
+  cvInitMatHeader( M1, m1->GetNRows(), m1->GetNCols(), CV_32FC1, d1 );
 }
 
-void ConvertMatrixMat(cv::Mat& M1, Matrix<float>* m) {
+void ConvertMatrixMat(Matrix<float>* m1, cv::Mat* M1) {
+  int idx, x, y;
+  idx = 0;
+  M1 = new cv::Mat(m1->GetNRows(), m1->GetNCols(), CV_32F);
+  //change to row major order 
+  for (x = 0; x < m1->GetNRows(); x++) {
+    for (y = 0; y < m1->GetNCols(); y++) {
+      M1->at<float>(x, y) = m1->GetElement(x, y); // not sure if ok TODO
+    }
+  }
+
+  M1 -> addref();
+}
+
+void ConvertMatMatrix(cv::Mat& M1, Matrix<float>* m) {
   // copy data to convert to rowwise
   m = new Matrix<float>(M1.rows, M1.cols);
   for (int x = 0; x < M1.rows; x++) {
     for (int y = 0; y < M1.cols; y++) {
-      m->SetValue(x, y, M1.at<float>(x, y));
+      m->SetValue(x, y, M1.at<float>(x, y)); // not sure if ok TODO
     }
   }
 }
 
-void ConvertVectorMat(cv::Mat& M1, Vector<float>* m) {
+void ConvertMatVector(cv::Mat& M1, Vector<float>* m) {
   m = new Vector<float>(M1.rows);
   for (int x = 0; x < M1.rows; ++x)
     m->SetElement(x, M1.at<float>(x, 0));
@@ -140,7 +157,7 @@ void ConvertVectorMat(cv::Mat& M1, Vector<float>* m) {
 Matrix<float> *MultMatrices(Matrix<float> *m1, Matrix<float> *m2) {
   Matrix<float> *dataRet;
   float *d1, *d2, *d3;
-  Mat M1, M2, M3;
+  CvMat M1, M2, M3;
   int x, y, idx;
 
   // check if multiplication is consistent
@@ -177,7 +194,7 @@ Matrix<float> *MultMatrices(Matrix<float> *m1, Matrix<float> *m2) {
 // invert a matrix
 Matrix<float> *InvMatrix(Matrix<float> *m) {
   float *d1, *d2;
-  cv::Mat M1, M2;
+  CvMat M1, M2;
   Matrix<float> *dataRet;
   int x, y, idx;
   double ret;
@@ -200,7 +217,7 @@ Matrix<float> *InvMatrix(Matrix<float> *m) {
     printf("error: matrix cannot be inverted\n");
     exit(2);
   }
-  
+
   // copy result
   idx = 0;
   for (y = 0; y < dataRet->GetNRows(); y++) {
@@ -218,7 +235,7 @@ Matrix<float> *InvMatrix(Matrix<float> *m) {
 // transpose matrix
 Matrix<float> *TransposeMatrix(Matrix<float> *m) {
   float *d1, *d2;
-  Mat M1, M2;
+  CvMat M1, M2;
   Matrix<float> *dataRet;
   int x, y, idx;
 

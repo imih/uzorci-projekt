@@ -29,9 +29,9 @@ const bool readFeatFromFile = false;
 const bool writeFeatToFile = false;
 const int maxlen = 2048;
 
-// window size is fixed: 64 x 128
-const int colWin = 64;
-const int rowWin = 128;
+// window size is fixed: 64 x 128 
+const int colWin = 96;
+const int rowWin = 160;
 const int negSampleSize = 10;
 
 struct ImNode {
@@ -100,8 +100,10 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
     getTrainingSet();
     for(int im = 0; im < min(10, (int) posImNodes.size()); ++im) {
       Mat curWin = cv::imread(posImNodes[im].fileName, 1); //BGR
+      assert(curWin.rows ==  rowWin);
+      assert(curWin.cols ==  colWin);
       perBlockPosTex.push_back(getTextFeatures(curWin));
-      //perBlockPosHog.push_back(getHOGFeatures(curWin)); 
+      perBlockPosHog.push_back(getHOGFeatures(curWin)); 
       clock_t endPos = clock();
       printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
           double(endPos - begin) / CLOCKS_PER_SEC);
@@ -120,6 +122,8 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
         for(int j = 0; (j + colWin <= image.cols) && (w <= negSampleSize); j += colWin) {
           w++;
           Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
+          assert(curWin.rows ==  rowWin);
+          assert(curWin.cols ==  colWin);
           perBlockNegTex.push_back(getTextFeatures(curWin));
           perBlockNegHog.push_back(getHOGFeatures(curWin));
           clock_t endPos = clock();

@@ -25,14 +25,16 @@ CvSVMParams getSVMParams(){
 double getVip(Model& model) { double ret1 = 0, ret2 = 0;
   Matrix<float>* W = model.GetWMatrix();
   Vector<float>* b = model.GetbVector();
-  for(int k = 0; k < model.nfactors; ++k) {
+  int factors = b->GetNElements();
+
+  for(int k = 0; k < factors; ++k) {
     int bk = (double) (*b)[k];
     int wkj = (double) W -> GetElement(k, 0);
     ret1 += bk * bk * wkj * wkj;
     ret2 += bk * bk;
   }
 
-  return sqrt(ret1 * model.nfeatures  / ret2);
+  return sqrt(ret1 * factors / ret2);
 }
 
 vector<double> tvip, hvip;
@@ -95,9 +97,13 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
   }
 
   valRes = Mat(Nval, 1, CV_32F);
+  valRes.addref();
   trainRes = Mat(Ntr, 1, CV_32F);
+  trainRes.addref();
   trainData = Mat(Ntr, features, CV_32F);
+  trainData.addref();
   valData = Mat(Nval, features, CV_32F);
+  valData.addref();
 
   int val_id = 0;
   int train_id = 0;
@@ -157,7 +163,9 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   Matrix<float> *mPos, *mNeg;
 
   //calc  rank for each block
+  puts("getting vip for texture blocks...");
   int tblocks = (int) posTex[0].size();
+  assert(tblocks == (int) negTex[0].size());
   tvip = vector<double>(tblocks, 0);
   int mt  = (int) posTex[0][0].f.n;
   int pnt = (int) posTex.size();
@@ -174,12 +182,11 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       mNeg->SetRow(&negTex[j][i].f, j);
     }
 
-    puts("creating model");
     model.CreatePLSModel(mPos, mNeg, kBlkFactors);
-    puts("getting vip");
     tvip[i] = getVip(model);
   }
 
+  puts("getting vip for hog blocks...");
   int hblocks = (int) posHog[0].size();
   hvip = vector<double>(hblocks, 0);
   int mh = (int) posHog[0][0].f.n;
@@ -293,20 +300,20 @@ void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex,
           posHog, negHog);
 
       Matrix<float>* mTrain;
-      ConvertMatrixMat(trainData, mTrain);
+      ConvertMatMatrix(trainData, mTrain);
       Vector<float>* mVal;
-      ConvertVectorMat(valData, mVal);
+      ConvertMatVector(valData, mVal);
       model.CreatePLSModel(mTrain, mVal, nfactors[i]);
 
       Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
       Matrix<float>* mValid;
-      ConvertMatrixMat(valData, mValid);
+      ConvertMatMatrix(valData, mValid);
       Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
 
-      ConvertMatrixFormat(plsmTrain, &trainData);
+      ConvertMatrixMat(plsmTrain, &trainData);
       svm.train(trainRes, trainRes, Mat(), Mat(), svmparams);
 
-      ConvertMatrixFormat(plsmValid, &valData);
+      ConvertMatrixMat(plsmValid, &valData);
       svm.predict(valData, valH);
       double err = errCnt(valH, valRes);
       avgScore[i] += err;
