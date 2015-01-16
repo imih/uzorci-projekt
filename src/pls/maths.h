@@ -159,8 +159,10 @@ class Vector {
 
   // copy this vector to a new one
   Vector *Copy() { 
+    puts("tu");
     Vector<T> *v1; 
     T *data;
+    printf("----------> %d\n", n);
     v1 = new Vector<T>(n);
     data = v1->GetData();
     memcpy(data, this->GetData(), sizeof(T) * n);
@@ -405,8 +407,8 @@ class Maths {
 void ConvertMatrixFormat(Matrix<float> *m1, CvMat* M1, float **data);
 
 void ConvertMatrixMat(Matrix<float>* m, cv::Mat* M1);
-void ConvertMatMatrix(cv::Mat& M1, Matrix<float>* m);
-void ConvertMatVector(cv::Mat& M1, Vector<float>* m);
+Matrix<float> *ConvertMatMatrix(cv::Mat& M1);
+Vector<float> *ConvertMatVector(cv::Mat& M1);
 // multiply two matrices
 Matrix<float> *MultMatrices(Matrix<float> *m1, Matrix<float> *m2);
 // invert matrix

@@ -312,15 +312,13 @@ void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex,
       splitSample(trainData, trainRes, valData, valRes, blocks_no, k, posTex, negTex, 
           posHog, negHog);
 
-      Matrix<float>* mTrain;
-      ConvertMatMatrix(trainData, mTrain);
-      Vector<float>* mVal;
-      ConvertMatVector(valData, mVal);
+      Matrix<float>* mTrain = ConvertMatMatrix(trainData);
+      Vector<float>* mVal = ConvertMatVector(valData);
+
       model.CreatePLSModel(mTrain, mVal, nfactors[i]);
 
       Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
-      Matrix<float>* mValid;
-      ConvertMatMatrix(valData, mValid);
+      Matrix<float>* mValid = ConvertMatMatrix(valData);
       Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
 
       ConvertMatrixMat(plsmTrain, &trainData);

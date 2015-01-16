@@ -136,21 +136,22 @@ void ConvertMatrixMat(Matrix<float>* m1, cv::Mat* M1) {
   M1 -> addref();
 }
 
-void ConvertMatMatrix(cv::Mat& M1, Matrix<float>* m) {
+Matrix<float> *ConvertMatMatrix(cv::Mat& M1) {
   // copy data to convert to rowwise
-  m = new Matrix<float>(M1.rows, M1.cols);
+  Matrix<float> *m = new Matrix<float>(M1.rows, M1.cols);
   for (int x = 0; x < M1.rows; x++) {
     for (int y = 0; y < M1.cols; y++) {
       m->SetValue(x, y, M1.at<float>(x, y)); // not sure if ok TODO
     }
   }
+  return m;
 }
 
-void ConvertMatVector(cv::Mat& M1, Vector<float>* m) {
-  m = new Vector<float>(M1.rows);
+Vector<float> *ConvertMatVector(cv::Mat& M1) {
+  Vector<float> *m = new Vector<float>(M1.rows);
   for (int x = 0; x < M1.rows; ++x)
     m->SetElement(x, M1.at<float>(x, 0));
-
+  return m;
 }
 
 // multiplication of two matrices
