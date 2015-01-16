@@ -78,16 +78,17 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
 
   int N = (int) sample_ids.size();
   int Nval = N / 10 + (k + 1 <= N % 10);
+  assert(Nval > 0);
   int Ntr = N - Nval;
   int features = 0;
   for(int i = 0; i < block; ++i) {
     features += (allBlocks[i].first == 't' ? posTex[0][0].f.n : posHog[0][0].f.n);
   }
 
-  valRes = Mat(Nval, 1, CV_32F);
-  valRes.addref();
   trainRes = Mat(Ntr, 1, CV_32F);
   trainRes.addref();
+  valRes = Mat(Nval, 1, CV_32F);
+  valRes.addref();
   trainData = Mat(Ntr, features, CV_32F);
   trainData.addref();
   valData = Mat(Nval, features, CV_32F);
@@ -244,16 +245,20 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     // ne treba pls
     for(int i = 0; i < 8; ++i) {
       printf("...%d %d\n", i, k);
-      printf("splitting..");
+      puts("splitting..");
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
           posTex, negTex, posHog, negHog, true);
-      printf("training...");
+      puts("training...");
       for(int i = 0; i < trainRes.rows; ++i)
         printf("%lf\n", trainRes.at<float>(i, 0));
       svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
       svm.predict(valData, valH);
-      printf("predicted.");
+      puts("predicted.");
       double err = errCnt(valH, valRes);
+      trainData.release();
+      trainRes.release();
+      valData.release();
+      valRes.release();
       avgScore[i] += err;
     }
   }
