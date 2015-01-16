@@ -70,13 +70,12 @@ vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block,
 const int kBlkFactors = 16;
 
 vector<int> sample_ids; 
-int last;
 void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int block, 
     int k, vector<vector<TextBlock> >& posTex, vector<vector<TextBlock> >& negTex, 
-    vector<vector<HOGBlock> >& posHog, vector<vector<HOGBlock> >& negHog, bool order = false) {
-  if(!k) last = 0;
-
+    vector<vector<HOGBlock> >& posHog, vector<vector<HOGBlock> >& negHog, 
+    bool order = false) {
   int N = (int) sample_ids.size();
+  int last = (N / 10) * k + min(k, N % 10);
   int Nval = N / 10 + (k + 1 <= N % 10);
   assert(Nval > 0);
   int Ntr = N - Nval;
@@ -84,6 +83,8 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
   for(int i = 0; i < block; ++i) {
     features += (allBlocks[i].first == 't' ? posTex[0][0].f.n : posHog[0][0].f.n);
   }
+
+  printf("%d\n", features);
 
   trainRes = Mat(Ntr, 1, CV_32F);
   trainRes.addref();
@@ -221,6 +222,7 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
   //randomize 
   std::srand((unsigned) time(NULL));
+  sample_ids.clear();
   for(int i = 0; i < (int) posTex.size(); ++i) {
     sample_ids.push_back(i);
   }
