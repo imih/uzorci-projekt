@@ -129,7 +129,7 @@ void ConvertMatrixMat(Matrix<float>* m1, cv::Mat* M1) {
   //change to row major order 
   for (x = 0; x < m1->GetNRows(); x++) {
     for (y = 0; y < m1->GetNCols(); y++) {
-      M1->at<float>(x, y) = m1->GetElement(x, y); // not sure if ok TODO
+      M1->at<float>(x, y) = m1->GetElement(y, x); 
     }
   }
 
@@ -141,7 +141,7 @@ Matrix<float> *ConvertMatMatrix(cv::Mat& M1) {
   Matrix<float> *m = new Matrix<float>(M1.rows, M1.cols);
   for (int x = 0; x < M1.rows; x++) {
     for (int y = 0; y < M1.cols; y++) {
-      m->SetValue(x, y, M1.at<float>(x, y)); // not sure if ok TODO
+      m->SetValue(x, y, M1.at<float>(x, y));
     }
   }
   return m;
