@@ -28,5 +28,24 @@ namespace hog {
       block_id = bl_id;
     }
 
+    void output() {
+      puts("HOG-R");
+      for (int i = 0; i < 12; ++i)
+	printf("%.3f ", f.GetElement(i));
+      puts("");
+      puts("HOG-G");
+      for (int i = 0; i < 12; ++i)
+	printf("%.3f ", f.GetElement(i + 12));
+      puts("");
+      puts("HOG-B");
+      for (int i = 0; i < 12; ++i)
+	printf("%.3f ", f.GetElement(i + 24));
+      puts("");
+      puts("RGB");
+      for (int i = 0; i < 3; ++i)
+	printf("%.3f ", f.GetElement(i + 36));
+      puts("");
+      puts("");
+    }
   };
 }

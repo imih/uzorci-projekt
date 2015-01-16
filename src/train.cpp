@@ -73,8 +73,9 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
   vector<HOGBlock> ret;
   calc_features(image, ret);
   return ret;
-} int main(int argc, char** argv) { //have posImNodes and negImNodes now
+} 
 
+int main(int argc, char** argv) { //have posImNodes and negImNodes now
   puts("Getting features...pos...");
   vector<vector<TextBlock> > perBlockPosTex;
   vector<vector<HOGBlock> > perBlockPosHog;

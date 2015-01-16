@@ -21,7 +21,7 @@ namespace hog {
   const int ANGLE_BIN_CNT = 12;
   const double PI = 4.0 * atan(1);
 
-  enum {ANGLE_0, ANGLE_90, ANGLE_45, ANGLE_135};
+  enum {ANGLE_0, ANGLE_90};//, ANGLE_45, ANGLE_135};
   Mat kernels[ANGLE_CNT];
 
   void init_kernels() {
@@ -38,6 +38,7 @@ namespace hog {
     init_kernels(); // prebacit u neki glavni init?
 
     int sz[] = {image.rows, image.cols};
+    image.convertTo(image, CV_16S);
 
     for (int i = 0; i < ANGLE_CNT; ++i) {
       grad[i].create(image.rows, image.cols, CV_16SC3);
@@ -61,8 +62,8 @@ namespace hog {
       for (int j = 0; j < c; ++j) {
         float square_norms[3] = {0};
         for (int ch = 0; ch < 3; ++ch) {
-          float dx = planes[ANGLE_0][ch].at< unsigned char >(i, j);
-          float dy = planes[ANGLE_90][ch].at< unsigned char >(i, j);
+          float dx = planes[ANGLE_0][ch].at< int16_t >(i, j);
+          float dy = planes[ANGLE_90][ch].at< int16_t >(i, j);
           square_norms[ch] = (float) dx * dx + dy * dy;
 
           float alpha = atan2(dy, dx);
@@ -142,7 +143,7 @@ namespace hog {
           Mat blk_grad[ANGLE_CNT];
 
           for (int a = 0; a < ANGLE_CNT; ++a)
-            blk_grad[a] = Mat(image, Rect(j, i, block_sizes[bl][0], block_sizes[bl][1]));
+            blk_grad[a] = Mat(grad[a], Rect(j, i, block_sizes[bl][0], block_sizes[bl][1]));
 
           Vector<float> feature_vector; 
           calc_hog_and_color(blk_grad, feature_vector);
