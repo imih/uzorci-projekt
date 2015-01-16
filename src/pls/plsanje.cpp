@@ -38,27 +38,7 @@ double getVip(Model& model) {
   return sqrt(ret1 * factors / ret2);
 }
 
-vector<double> tvip, hvip;
 vector<pair<char, int> > allBlocks;
-double getVal(const pair<char, int> a) {
-  if(a.first == 't') {
-    assert(a.second >= 0 && a.second < tvip.size());
-    return tvip[a.second];
-  } else if(a.first == 'h') {
-    assert(a.second >= 0 && a.second < hvip.size());
-    return hvip[a.second];
-  } else {
-    printf("PROBLEM: %c !", a.first);
-    exit(1);
-  }
-}
-
-bool cmpAllBlocks(const pair<char, int> a, const pair<char, int> b) {
-  double v1 = getVal(a);
-  double v2 = getVal(b);
-  return v1 + eps >= v2;
-}
-
 vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block, 
     bool order = false) {
   vector<float> ret;
@@ -117,33 +97,35 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
   int train_id = 0;
   for(int i = 0; i < N; ++i) {
     int cur_id = sample_ids[i];
-    int& cur_val = train_id;
-    Mat& curResp = trainRes;
-    Mat& curData = trainData;
-
-    if(i >= last && (k < last + Nval)) {
-      //update validation set
-      cur_val = val_id;
-      curResp = valRes;
-      curData = valData;
-    }
+    bool getToVal = ((i >= last) && (i < last + Nval));
 
     vector<float> allFeatures;
     if(cur_id >= 0) {
-      curResp.at<float>(cur_val, 0) = 1;
+      if(!getToVal) {
+        trainRes.at<float>(train_id, 0) = 1;
+      } else {
+        valRes.at<float>(val_id, 0) = 1;
+      }
       allFeatures = getFeats(posTex[cur_id], posHog[cur_id], block, order);
     } else {
-      curResp.at<float>(cur_val, 0) = -1;
-      cur_id = - cur_id - 1;
+      if(!getToVal)
+        trainRes.at<float>(train_id, 0) = -1;
+      else 
+        valRes.at<float>(val_id, 0) = -1;
+      cur_id = -cur_id - 1;
       allFeatures = getFeats(negTex[cur_id], negHog[cur_id], block, order);
     }
 
     assert((int) allFeatures.size() == features);
     //update cur_val row  of curData with features allFeatures
     for(int i = 0; i < features; ++i) {
-      curData.at<float>(cur_val, i) = allFeatures[i];
+      if(!getToVal)
+        trainData.at<float>(train_id, i) = allFeatures[i];
+      else valData.at<float>(val_id, i) = allFeatures[i];
     }
-    cur_val++;
+    if(!getToVal)
+      train_id++;
+    else val_id++;
   }
 
   last += Nval;
@@ -178,7 +160,7 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
   int tblocks = (int) posTex[0].size();
   assert(tblocks == (int) negTex[0].size());
-  tvip = vector<double>(tblocks, 0);
+  vector<double> tvip = vector<double>(tblocks, 0);
   for(int i = 0; i < tblocks; ++i) {
     mPos = new Matrix<float>(pnt, mt);
     for(int j = 0; j < pnt; ++j) {
@@ -199,10 +181,10 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   int mh = (int) posHog[0][0].f.n;
   int pnh = (int) posHog.size();
   int nnh = (int) negHog.size();
-  
+
   int hblocks = (int) posHog[0].size();
   assert(hblocks == (int) negHog[0].size());
-  hvip = vector<double>(hblocks, 0);
+  vector<double> hvip = vector<double>(hblocks, 0);
   for(int i = 0; i < hblocks; ++i) {
     mPos = new Matrix<float>(pnh, mh);
     for(int j = 0; j < pnh; ++j) {
@@ -225,7 +207,15 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     allBlocks.push_back(make_pair('t', i));
   for(int i = 0; i < (int) posHog[0].size(); ++i)
     allBlocks.push_back(make_pair('h', i));
-  sort(allBlocks.begin(), allBlocks.end(), cmpAllBlocks);
+  sort(allBlocks.begin(), allBlocks.end(), [&](
+        const pair<char, int>& a, const pair<char, int>&b) {
+      assert(a.first == 't' || a.first == 'h');
+      assert(b.first == 't' || b.first == 'h');
+      double v1 = a.first == 't' ? tvip[a.second] : hvip[a.second];
+      double v2 = b.first == 't' ? tvip[b.second] : hvip[b.second];
+      if(fabs(v1 - v2) <= eps) return false;
+      return v1 + eps >= v2;
+      });
   puts("done sorting\n");
 
   //randomize 
@@ -258,6 +248,8 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
           posTex, negTex, posHog, negHog, true);
       printf("training...");
+      for(int i = 0; i < trainRes.rows; ++i)
+        printf("%lf\n", trainRes.at<float>(i, 0));
       svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
       svm.predict(valData, valH);
       printf("predicted.");
