@@ -135,6 +135,7 @@ namespace hog {
 
       for (int i = 0; i + block_sizes[bl][1] <= r; i += shift) {
         for (int j = 0; j + block_sizes[bl][0] <= c; j += shift) {
+          //TODO provjeri dal je block prazan!
           block_id++;
           if(chosen.size() && !chosen.count(block_id)) 
             continue;

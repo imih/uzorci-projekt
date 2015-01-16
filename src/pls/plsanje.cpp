@@ -14,18 +14,19 @@ using std::sort;
 using cv::Mat;
 using std::pair;
 
+const double eps = 10e-6;
+
 CvSVMParams getSVMParams(){
-  CvSVMParams svmparams;
-  svmparams.svm_type = CvSVM::C_SVC;
-  svmparams.kernel_type = CvSVM::POLY;
-  svmparams.degree = 2;
-  svmparams.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100, 1e-6);
+  return CvSVMParams(CvSVM::C_SVC, CvSVM::POLY, 2, 1, 0, 1, 0, 0, NULL, cvTermCriteria(
+        CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 1000, FLT_EPSILON));
 };
 
-double getVip(Model& model) { double ret1 = 0, ret2 = 0;
+double getVip(Model& model) { 
+  double ret1 = 0, ret2 = 0;
   Matrix<float>* W = model.GetWMatrix();
   Vector<float>* b = model.GetbVector();
   int factors = b->GetNElements();
+  assert(factors > 0);
 
   for(int k = 0; k < factors; ++k) {
     int bk = (double) (*b)[k];
@@ -39,16 +40,23 @@ double getVip(Model& model) { double ret1 = 0, ret2 = 0;
 
 vector<double> tvip, hvip;
 vector<pair<char, int> > allBlocks;
-double getVal(const pair<char, int>& a) {
-  if(a.first == 't')
+double getVal(const pair<char, int> a) {
+  if(a.first == 't') {
+    assert(a.second >= 0 && a.second < tvip.size());
     return tvip[a.second];
-  else return hvip[a.second];
+  } else if(a.first == 'h') {
+    assert(a.second >= 0 && a.second < hvip.size());
+    return hvip[a.second];
+  } else {
+    printf("PROBLEM: %c !", a.first);
+    exit(1);
+  }
 }
 
-bool cmpAllBlocks(const pair<char, int>& a, const pair<char, int>& b) {
+bool cmpAllBlocks(const pair<char, int> a, const pair<char, int> b) {
   double v1 = getVal(a);
   double v2 = getVal(b);
-  return v1 >= v2;
+  return v1 + eps >= v2;
 }
 
 vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block, 
@@ -125,7 +133,7 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
       curResp.at<float>(cur_val, 0) = 1;
       allFeatures = getFeats(posTex[cur_id], posHog[cur_id], block, order);
     } else {
-      curResp.at<float>(cur_val, 0) = 0;
+      curResp.at<float>(cur_val, 0) = -1;
       cur_id = - cur_id - 1;
       allFeatures = getFeats(negTex[cur_id], negHog[cur_id], block, order);
     }
@@ -164,12 +172,13 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
   //calc  rank for each block
   puts("getting vip for texture blocks...");
-  int tblocks = (int) posTex[0].size();
-  assert(tblocks == (int) negTex[0].size());
-  tvip = vector<double>(tblocks, 0);
   int mt  = (int) posTex[0][0].f.n;
   int pnt = (int) posTex.size();
   int nnt = (int) negTex.size();
+
+  int tblocks = (int) posTex[0].size();
+  assert(tblocks == (int) negTex[0].size());
+  tvip = vector<double>(tblocks, 0);
   for(int i = 0; i < tblocks; ++i) {
     mPos = new Matrix<float>(pnt, mt);
     for(int j = 0; j < pnt; ++j) {
@@ -187,11 +196,13 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   }
 
   puts("getting vip for hog blocks...");
-  int hblocks = (int) posHog[0].size();
-  hvip = vector<double>(hblocks, 0);
   int mh = (int) posHog[0][0].f.n;
   int pnh = (int) posHog.size();
   int nnh = (int) negHog.size();
+  
+  int hblocks = (int) posHog[0].size();
+  assert(hblocks == (int) negHog[0].size());
+  hvip = vector<double>(hblocks, 0);
   for(int i = 0; i < hblocks; ++i) {
     mPos = new Matrix<float>(pnh, mh);
     for(int j = 0; j < pnh; ++j) {
@@ -202,17 +213,20 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     for(int j = 0; j < nnh; ++j) {
       mNeg->SetRow(&negHog[j][i].f, j);
     }
-    model.CreatePLSModel(mPos, mNeg , kBlkFactors);
+
+    model.CreatePLSModel(mPos, mNeg , 3);
     hvip[i] = getVip(model);
   }
 
   //**************************************************************
   //sort all blocks by vip score
-  for(int i = 0; i < posTex[0].size(); ++i) 
+  allBlocks.clear();
+  for(int i = 0; i < (int) posTex[0].size(); ++i) 
     allBlocks.push_back(make_pair('t', i));
-  for(int i = 0; i < posHog[0].size(); ++i)
+  for(int i = 0; i < (int) posHog[0].size(); ++i)
     allBlocks.push_back(make_pair('h', i));
   sort(allBlocks.begin(), allBlocks.end(), cmpAllBlocks);
+  puts("done sorting\n");
 
   //randomize 
   std::srand((unsigned) time(NULL));
@@ -240,11 +254,11 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     // ne treba pls
     for(int i = 0; i < 8; ++i) {
       printf("...%d %d\n", i, k);
+      printf("splitting..");
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
           posTex, negTex, posHog, negHog, true);
-      printf("split.");
-      svm.train(trainRes, trainRes, Mat(), Mat(), svmparams);
-      printf("trained.");
+      printf("training...");
+      svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
       svm.predict(valData, valH);
       printf("predicted.");
       double err = errCnt(valH, valRes);

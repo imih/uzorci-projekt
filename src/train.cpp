@@ -25,6 +25,7 @@ using namespace cv;
 
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
+const int debugFeaturesNo = 20;
 const bool readFeatFromFile = false;
 const bool writeFeatToFile = false;
 const int maxlen = 2048;
@@ -32,10 +33,10 @@ const int maxlen = 2048;
 // window size is fixed: 64 x 128 
 const int colWin = 96;
 const int rowWin = 160;
-const int negSampleSize = 10;
+const int negSampleSize = min(debugFeaturesNo, 10000);
 
 struct ImNode {
-  string fileName;
+  string fileName; 
   ImNode(string name) {
     fileName = name;
   }
@@ -98,7 +99,7 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
         double(endPos - begin) / CLOCKS_PER_SEC);
   } else {
     getTrainingSet();
-    for(int im = 0; im < min(10, (int) posImNodes.size()); ++im) {
+    for(int im = 0; im < min(debugFeaturesNo, (int) posImNodes.size()); ++im) {
       Mat curWin = cv::imread(posImNodes[im].fileName, 1); //BGR
       assert(curWin.rows ==  rowWin);
       assert(curWin.cols ==  colWin);
@@ -116,12 +117,14 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
 
     puts("neg...");
     int w = 0;
-    for(int im = 0; (im < (int) negImNodes.size()) && (w <= negSampleSize); ++im) {
+    for(int im = 0; (im < (int) negImNodes.size()) && (w < negSampleSize); ++im) {
       Mat image = cv::imread(negImNodes[im].fileName, 1); //BGR
-      for(int i = 0; (i + rowWin <= image.rows) && (w <= negSampleSize); i += rowWin) 
-        for(int j = 0; (j + colWin <= image.cols) && (w <= negSampleSize); j += colWin) {
+      for(int i = 0; (i + rowWin <= image.rows) && (w < negSampleSize); i += rowWin) 
+        for(int j = 0; (j + colWin <= image.cols) && (w < negSampleSize); j += colWin) {
+          //TODO dodaj crni okvir!
           w++;
           Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
+
           assert(curWin.rows ==  rowWin);
           assert(curWin.cols ==  colWin);
           perBlockNegTex.push_back(getTextFeatures(curWin));
