@@ -12,10 +12,7 @@ using hog::HOGBlock;
 using std::random_shuffle;
 using std::sort;
 using cv::Mat;
-using std::pair;
-
-const double eps = 10e-6;
-
+using std::pair; const double eps = 10e-6; 
 CvSVMParams getSVMParams(){
   return CvSVMParams(CvSVM::C_SVC, CvSVM::POLY, 2, 1, 0, 1, 0, 0, NULL, cvTermCriteria(
         CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 1000, FLT_EPSILON));
@@ -25,8 +22,7 @@ double getVip(Model& model) {
   double ret1 = 0, ret2 = 0;
   Matrix<float>* W = model.GetWMatrix();
   Vector<float>* b = model.GetbVector();
-  int factors = b->GetNElements();
-  assert(factors > 0);
+  int factors = model.nfactors;
 
   for(int k = 0; k < factors; ++k) {
     int bk = (double) (*b)[k];
@@ -159,6 +155,7 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   int tblocks = (int) posTex[0].size();
   assert(tblocks == (int) negTex[0].size());
   vector<double> tvip = vector<double>(tblocks, 0);
+  FILE *f = fopen("tvip", "w");
   for(int i = 0; i < tblocks; ++i) {
     mPos = new Matrix<float>(pnt, mt);
     for(int j = 0; j < pnt; ++j) {
@@ -172,14 +169,18 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     }
 
     model.CreatePLSModel(mPos, mNeg, kBlkFactors);
-    tvip[i] = getVip(model);
+    tvip[i] = getVip(model);	
+    fprintf(f, "%0.10f ", tvip[i]);
   }
+  fclose (f);
+
 
   puts("getting vip for hog blocks...");
   int mh = (int) posHog[0][0].f.n;
   int pnh = (int) posHog.size();
   int nnh = (int) negHog.size();
 
+  f = fopen("hvip", "w");
   int hblocks = (int) posHog[0].size();
   assert(hblocks == (int) negHog[0].size());
   vector<double> hvip = vector<double>(hblocks, 0);
@@ -196,7 +197,9 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
     model.CreatePLSModel(mPos, mNeg , kBlkFactors);
     hvip[i] = getVip(model);
+    fprintf(f, "%0.10f", hvip[i]);
   }
+  fclose(f);
 
   //**************************************************************
   //sort all blocks by vip score
@@ -232,35 +235,41 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   CvSVMParams svmparams = getSVMParams();
   CvSVM svm;
 
-  int posBlockSizes[6] = {1, 2, 4, 8, 16, 32};// 64, 128};
-vector<double> avgScore(8, 0);
+  int posBlockSizes[8] = {1, 2, 4, 8, 16, 32, 64, 128};	
+  vector<double> avgScore(8, 0);
+  f = fopen("blocks_scores", "w");
 
-Mat trainData, trainRes, valData, valRes, valH; 
-puts("performing 10-fold cross validation for stage 1");
-for(int k = 0; k < 10; ++k) {
-  //chose subset of blocks you want to have in the 1st stage using 
-  //10-fold cross validation  
-  // ne treba pls
-  for(int i = 0; i < 6; ++i) {
-    printf("...%d %d\n", i, k);
-    puts("splitting..");
-    splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
-        posTex, negTex, posHog, negHog, true);
-    puts("training...");
-    svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
-    svm.predict(valData, valH);
-    puts("predicted.");
-    double err = errCnt(valH, valRes);
-    avgScore[i] += err;
+  Mat trainData, trainRes, valData, valRes, valH; 
+  puts("performing 10-fold cross validation for stage 1");
+  for(int k = 0; k < 10; ++k) {
+    //chose subset of blocks you want to have in the 1st stage using 
+    //10-fold cross validation  
+    // ne treba pls
+    for(int i = 0; i < 8; ++i) {
+      printf("...%d %d\n", i, k);
+      puts("splitting..");
+      splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
+          posTex, negTex, posHog, negHog, true);
+      puts("training...");
+      svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
+      valH = Mat(valData.rows, 1, CV_32F);
+      for(int j = 0; j < valData.rows; ++j) {		
+        valH.at<float>(j, 0) = svm.predict(valData.row(j), true);
+      }
+      puts("predicted.");
+      double err = errCnt(valH, valRes);
+      avgScore[i] += err;
+    }
   }
-}
 
-for(int i =0; i < 6; ++i) {
-  printf("block %d, score: %lf\n", posBlockSizes[i], avgScore[i]);
-}
+  for(int i =0; i < 8; ++i) {
+    printf("block %d, score: %lf\n", posBlockSizes[i], avgScore[i]);
+    fprintf(f, "%d %lf\n", posBlockSizes[i], avgScore[i]);
+  }
+  fclose(f);
 
-int bestBlock = posBlockSizes[min_element(avgScore.begin(), avgScore.end()) 
-  - avgScore.begin()];
+  int bestBlock = posBlockSizes[min_element(avgScore.begin(), avgScore.end()) 
+    - avgScore.begin()];
   chosenT.clear();
   chosenH.clear();
   for(int i = 0; i < bestBlock; ++i) {
@@ -270,7 +279,7 @@ int bestBlock = posBlockSizes[min_element(avgScore.begin(), avgScore.end())
       chosenT.insert(allBlocks[i].second);
     }
   }
-return;
+  return;
 }
 
 void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex, 
@@ -320,7 +329,10 @@ void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex,
 
       puts("eval...");
       ConvertMatrixMat(plsmValid, &valData);
-      svm.predict(valData, valH);
+      valH = Mat(valData.rows, 1, CV_32F);
+      for(int j = 0; j < valData.rows; ++j) {		
+        valH.at<float>(j, 0) = svm.predict(valData.row(j), true);
+      }
       double err = errCnt(valH, valRes);
       avgScore[i] += err;
     }
