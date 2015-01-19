@@ -25,8 +25,8 @@ double getVip(Model& model) {
   int factors = model.nfactors;
 
   for(int k = 0; k < factors; ++k) {
-    int bk = (double) (*b)[k];
-    int wkj = (double) W -> GetElement(k, 0);
+    double bk = (double) (*b)[k];
+    double wkj = (double) W -> GetElement(k, 0);
     ret1 += bk * bk * wkj * wkj;
     ret2 += bk * bk;
   }
@@ -133,6 +133,7 @@ double errCnt(Mat& h, Mat& y) {
     if(delta >= 10e-6)
       ret += delta;
   }
+  ret /= n;
 
   return ret;
 }
