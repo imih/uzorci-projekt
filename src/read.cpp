@@ -17,7 +17,7 @@ using texture::TextBlock;
 using hog::HOGBlock;
 using boost::algorithm::join;
 
-const int maxlen = 800000;
+const int maxlen = 8;
 char t[maxlen];
 
 template<typename T> 

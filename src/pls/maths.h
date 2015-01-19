@@ -95,7 +95,8 @@ class Vector {
 
 
   // retrieve element at row y and column x
-  inline T GetElement(int x) { return v[x]; }
+  inline T GetElement(int x) { 
+    return v[x]; }
   inline T operator[](int x) { return v[x]; }
 
 

@@ -126,8 +126,6 @@ Vector<float> *Ynew;
 	// number of features
 	this->nfeatures = X->GetNCols();
 
-	printf("%d : %d\n", X, Y);
-
 	// copy matrices
 	Xnew = X->Copy();
 	Ynew = Y->Copy();

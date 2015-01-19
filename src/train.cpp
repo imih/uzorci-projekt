@@ -25,14 +25,14 @@ using namespace cv;
 
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
-const int debugFeaturesNo = 20;
+const int debugFeaturesNo = 10000;
 const bool readFeatFromFile = false;
 const bool writeFeatToFile = false;
 const int maxlen = 2048;
 
 // window size is fixed: 64 x 128 
-const int colWin = 96;
-const int rowWin = 160;
+const int colWin = 64;
+const int rowWin = 128;
 const int negSampleSize = min(debugFeaturesNo, 10000);
 
 struct ImNode {
@@ -79,7 +79,8 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
   puts("Getting features...pos...");
   vector<vector<TextBlock> > perBlockPosTex;
   vector<vector<HOGBlock> > perBlockPosHog;
-  vector<vector<TextBlock> > perBlockNegTex; vector<vector<HOGBlock> > perBlockNegHog;
+  vector<vector<TextBlock> > perBlockNegTex; 
+  vector<vector<HOGBlock> > perBlockNegHog;
   clock_t begin = clock();
 
   if(readFeatFromFile) {
@@ -101,7 +102,8 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
   } else {
     getTrainingSet();
     for(int im = 0; im < min(debugFeaturesNo, (int) posImNodes.size()); ++im) {
-      Mat curWin = cv::imread(posImNodes[im].fileName, 1); //BGR
+      Mat image = cv::imread(posImNodes[im].fileName, 1);
+      Mat curWin = Mat(image, Rect(16, 16, colWin, rowWin)); //BGR
       assert(curWin.rows ==  rowWin);
       assert(curWin.cols ==  colWin);
       perBlockPosTex.push_back(getTextFeatures(curWin));
@@ -120,9 +122,8 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
     int w = 0;
     for(int im = 0; (im < (int) negImNodes.size()) && (w < negSampleSize); ++im) {
       Mat image = cv::imread(negImNodes[im].fileName, 1); //BGR
-      for(int i = 0; (i + rowWin <= image.rows) && (w < negSampleSize); i += rowWin) 
-        for(int j = 0; (j + colWin <= image.cols) && (w < negSampleSize); j += colWin) {
-          //TODO dodaj crni okvir!
+      for(int i = 16; (i + rowWin <= image.rows - 16) && (w < negSampleSize); i += rowWin) 
+        for(int j = 16; (j + colWin <= image.cols - 16) && (w < negSampleSize); j += colWin) {
           w++;
           Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
 
@@ -136,6 +137,7 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
         } 
     }
     if(writeFeatToFile) {
+      puts("writing to file...");
       writeTex(perBlockNegTex, 0);
       writeHog(perBlockNegHog, 0);
     }
@@ -149,6 +151,16 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
   puts("Performing per block analysis...\n"); 
   plsPerBlock(perBlockPosTex, perBlockNegTex, texChosen1st,
       perBlockPosHog, perBlockNegHog, hogChosen1st);
+  printf("block len: %d\n", (int) texChosen1st.size() + (int) hogChosen1st.size());
+  puts("texChosen: ");
+  for(int ch1: texChosen1st)
+  printf("%d " ,ch1);
+  printf("\n");
+  puts("hogChosen: ");
+  for(int ch1 : hogChosen1st)
+    printf("%d ", ch1);
+  printf("\n");
+  exit(0);
 
   //cross validate:
   //1) n_factors - stage 1 (jel potrebno? ne znam)
