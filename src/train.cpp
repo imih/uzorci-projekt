@@ -25,7 +25,7 @@ using namespace cv;
 
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
-const int debugFeaturesNo = 10000;
+const int debugFeaturesNo = 200000;
 const bool readFeatFromFile = false;
 const bool writeFeatToFile = false;
 const int maxlen = 2048;
@@ -147,24 +147,8 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
   clock_t endPos = clock();
 
   // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
-  set<int> texChosen1st, hogChosen1st;
-  puts("Performing per block analysis...\n"); 
-  plsPerBlock(perBlockPosTex, perBlockNegTex, texChosen1st,
-      perBlockPosHog, perBlockNegHog, hogChosen1st);
-  printf("block len: %d\n", (int) texChosen1st.size() + (int) hogChosen1st.size());
-  puts("texChosen: ");
-  for(int ch1: texChosen1st)
-  printf("%d " ,ch1);
-  printf("\n");
-  puts("hogChosen: ");
-  for(int ch1 : hogChosen1st)
-    printf("%d ", ch1);
-  printf("\n");
-  exit(0);
-
-  //cross validate:
-  //1) n_factors - stage 1 (jel potrebno? ne znam)
-  //2) n_factors - stage 2
+  //puts("Performing per block analysis...\n"); 
+  //plsPerBlock(perBlockPosTex, perBlockNegTex, perBlockPosHog, perBlockNegHog);
 
   int n_factors_full;
   set<int> texChosen2nd, hogChosen2nd;

@@ -15,7 +15,7 @@ using cv::Mat;
 using std::pair; const double eps = 10e-6; 
 CvSVMParams getSVMParams(){
   return CvSVMParams(CvSVM::C_SVC, CvSVM::POLY, 2, 1, 0, 1, 0, 0, NULL, cvTermCriteria(
-        CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 1000, FLT_EPSILON));
+        CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 1001, FLT_EPSILON));
 };
 
 double getVip(Model& model) { 
@@ -76,9 +76,11 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
   assert(Nval > 0);
   int Ntr = N - Nval;
   int features = 0;
-  for(int i = 0; i < block; ++i) {
-    features += (allBlocks[i].first == 't' ? posTex[0][0].f.n : posHog[0][0].f.n);
-  }
+  if(allBlocks.size()) {
+    for(int i = 0; i < block; ++i) 
+      features += (allBlocks[i].first == 't' ? posTex[0][0].f.n : posHog[0][0].f.n);
+  } else 
+    features = (posTex[0].size() * posTex[0][0].f.n + posHog[0].size() * posHog[0][0].f.n);
 
   printf("%d\n", features);
 
@@ -140,10 +142,8 @@ double errCnt(Mat& h, Mat& y) {
 
 void plsPerBlock(vector<vector<TextBlock> >& posTex, 
     vector<vector<TextBlock> >& negTex, 
-    set<int>& chosenT,
     vector<vector<HOGBlock> >& posHog, 
-    vector<vector<HOGBlock> >& negHog, 
-    set<int>& chosenH) {
+    vector<vector<HOGBlock> >& negHog) {
   Model model;
   Matrix<float> *mPos, *mNeg;
 
@@ -156,7 +156,6 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   int tblocks = (int) posTex[0].size();
   assert(tblocks == (int) negTex[0].size());
   vector<double> tvip = vector<double>(tblocks, 0);
-  FILE *f = fopen("tvip", "w");
   for(int i = 0; i < tblocks; ++i) {
     mPos = new Matrix<float>(pnt, mt);
     for(int j = 0; j < pnt; ++j) {
@@ -170,18 +169,14 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     }
 
     model.CreatePLSModel(mPos, mNeg, kBlkFactors);
-    tvip[i] = getVip(model);	
-    fprintf(f, "%0.10f ", tvip[i]);
+    tvip[i] = getVip(model);
   }
-  fclose (f);
-
 
   puts("getting vip for hog blocks...");
   int mh = (int) posHog[0][0].f.n;
   int pnh = (int) posHog.size();
   int nnh = (int) negHog.size();
 
-  f = fopen("hvip", "w");
   int hblocks = (int) posHog[0].size();
   assert(hblocks == (int) negHog[0].size());
   vector<double> hvip = vector<double>(hblocks, 0);
@@ -198,9 +193,7 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
 
     model.CreatePLSModel(mPos, mNeg , kBlkFactors);
     hvip[i] = getVip(model);
-    fprintf(f, "%0.10f", hvip[i]);
   }
-  fclose(f);
 
   //**************************************************************
   //sort all blocks by vip score
@@ -236,9 +229,10 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   CvSVMParams svmparams = getSVMParams();
   CvSVM svm;
 
-  int posBlockSizes[8] = {1, 2, 4, 8, 16, 32, 64, 128};	
-  vector<double> avgScore(8, 0);
-  f = fopen("blocks_scores", "w");
+  int posBlockSizes[33] = {1 , 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+    17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 40};	
+  vector<double> avgScore(33, 0);
+  FILE* f = fopen("blocks_scores", "a");
 
   Mat trainData, trainRes, valData, valRes, valH; 
   puts("performing 10-fold cross validation for stage 1");
@@ -246,7 +240,7 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     //chose subset of blocks you want to have in the 1st stage using 
     //10-fold cross validation  
     // ne treba pls
-    for(int i = 0; i < 8; ++i) {
+    for(int i = 0; i < 33; ++i) {
       printf("...%d %d\n", i, k);
       puts("splitting..");
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
@@ -263,16 +257,15 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
     }
   }
 
-  for(int i =0; i < 8; ++i) {
+  for(int i =0; i < 33; ++i) {
     printf("block %d, score: %lf\n", posBlockSizes[i], avgScore[i]);
-    fprintf(f, "%d %lf\n", posBlockSizes[i], avgScore[i]);
+    fprintf(f, "block %d, score: %lf\n", posBlockSizes[i], avgScore[i]);
   }
-  fclose(f);
 
   int bestBlock = posBlockSizes[min_element(avgScore.begin(), avgScore.end()) 
     - avgScore.begin()];
-  chosenT.clear();
-  chosenH.clear();
+  set<int> chosenT;
+  set<int> chosenH;
   for(int i = 0; i < bestBlock; ++i) {
     if(allBlocks[i].first == 'h') {
       chosenH.insert(allBlocks[i].second);
@@ -280,6 +273,24 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       chosenT.insert(allBlocks[i].second);
     }
   }
+  printf("block len: %d\n", (int) chosenT.size() + (int) chosenH.size());
+  fprintf(f, "block len: %d\n", (int) chosenT.size() + (int) chosenH.size());
+  puts("texChosen: ");
+  for(int ch1: chosenT) {
+    printf("%d " ,ch1);
+    fprintf(f, "%d " ,ch1);
+  }
+  printf("\n");
+  fprintf(f, "\n");
+
+  puts("hogChosen: ");
+  for(int ch1 : chosenH) {
+    printf("%d ", ch1);
+    fprintf(f, "%d ", ch1);
+  }
+  printf("\n");
+  fprintf(f, "\n");
+  fclose(f);
   return;
 }
 
@@ -301,44 +312,57 @@ void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex,
 
   CvSVMParams svmparams = getSVMParams();
   CvSVM svm;
+ 
   Model model;
   Mat trainData, valData;
   Mat trainRes, valRes;
-  Mat valH; 
 
-  int nfactors[8] = {2, 4, 10, 15, 20, 25, 30, 35};
-  vector<double> avgScore(8, 0);
+  vector<double> avgScore(33, 0);
 
   //10-fold cross validation  
   int blocks_no = (int) posTex[0].size() + (int) posHog[0].size();
   for(int k = 0; k < 10; ++k) {
-    for(int i = 0; i < 8; ++i) {
-      splitSample(trainData, trainRes, valData, valRes, blocks_no, k, posTex, negTex, 
-          posHog, negHog);
-
+    splitSample(trainData, trainRes, valData, valRes, blocks_no, k, posTex, negTex, 
+        posHog, negHog);
+    for(int i = 2; i <= 2; ++i) {
       Matrix<float>* mTrain = ConvertMatMatrix(trainData);
       Vector<float>* mVal= ConvertMatVector(valData);
-      model.CreatePLSModel(mTrain, mVal, nfactors[i]);
+      model.CreatePLSModel(mTrain, mVal, i);
 
       Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
       Matrix<float>* mValid = ConvertMatMatrix(valData);
       Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
 
-      ConvertMatrixMat(plsmTrain, &trainData);
+      Mat* newTrainData = ConvertMatrixMat(plsmTrain);
       puts("training...");
-      svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
+      svm.train(*newTrainData, trainRes, Mat(), Mat(), svmparams);
 
       puts("eval...");
-      ConvertMatrixMat(plsmValid, &valData);
-      valH = Mat(valData.rows, 1, CV_32F);
-      for(int j = 0; j < valData.rows; ++j) {		
-        valH.at<float>(j, 0) = svm.predict(valData.row(j), true);
+      Mat* newValData = ConvertMatrixMat(plsmValid);
+      cv::Mat valH = Mat(newValData->rows, 1, CV_32F);
+      for(int j = 0; j < newValData->rows; ++j) {		
+        valH.at<float>(j, 0) = svm.predict(newValData->row(j), true);
       }
       double err = errCnt(valH, valRes);
       avgScore[i] += err;
+      printf("%lf\n", avgScore[i] / (k + 1));
+      delete mTrain;
+      delete mVal;
+      delete plsmTrain;
+      delete mValid;
+      delete plsmValid;
     }
   }
 
-  n_factors_best = nfactors[min_element(avgScore.begin(), avgScore.end()) - avgScore.begin()];
+  FILE* f = fopen("feat_scores", "w");
+
+  for(int i = 3; i <= 2; ++i) {
+    printf("feats: %d score: %lf\n", i, avgScore[i] / 10);
+    fprintf(f, "feats: %d score: %lf\n", i, avgScore[i] / 10);
+  }
+
+  n_factors_best = min_element(avgScore.begin(), avgScore.end()) - avgScore.begin();
+  printf("best: %d\n", n_factors_best);
+  fprintf(f, "best: %d\n", n_factors_best);
   //TODO ne znam dobiti samo one blokove koji se koriste  za pls!
 }

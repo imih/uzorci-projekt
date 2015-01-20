@@ -407,7 +407,7 @@ class Maths {
 // convert matrix format to openCV format - put data used in opencv format
 void ConvertMatrixFormat(Matrix<float> *m1, CvMat* M1, float **data);
 
-void ConvertMatrixMat(Matrix<float>* m, cv::Mat* M1);
+cv::Mat* ConvertMatrixMat(Matrix<float>* m);
 Matrix<float> *ConvertMatMatrix(cv::Mat& M1);
 Vector<float> *ConvertMatVector(cv::Mat& M1);
 // multiply two matrices

@@ -122,18 +122,16 @@ void ConvertMatrixFormat(Matrix<float> *m1, CvMat *M1, float **data) {
   cvInitMatHeader( M1, m1->GetNRows(), m1->GetNCols(), CV_32FC1, d1 );
 }
 
-void ConvertMatrixMat(Matrix<float>* m1, cv::Mat* M1) {
-  int idx, x, y;
-  idx = 0;
-  M1 = new cv::Mat(m1->GetNRows(), m1->GetNCols(), CV_32F);
+cv::Mat* ConvertMatrixMat(Matrix<float>* m1) {
+  int x, y;
+  cv::Mat* M1 = new cv::Mat(m1->GetNRows(), m1->GetNCols(), CV_32F);
   //change to row major order 
   for (x = 0; x < m1->GetNRows(); x++) {
     for (y = 0; y < m1->GetNCols(); y++) {
       M1->at<float>(x, y) = m1->GetElement(y, x); 
     }
   }
-
-  M1 -> addref();
+  return M1;
 }
 
 Matrix<float> *ConvertMatMatrix(cv::Mat& M1) {
