@@ -130,11 +130,15 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
 double errCnt(Mat& h, Mat& y) {
   int n = h.rows;
   double ret = 0;
+  int falses = 0;
   for(int i = 0; i < n; ++i) {
+    if((int) y.at<float>(i, 0) != h.at<float>(i, 0))
+      falses++;
     double delta =  1. - (double) y.at<float>(i, 0) * h.at<float>(i, 0);
     if(delta >= 10e-6)
       ret += delta;
   }
+  printf("%d\n", falses);
   ret /= n;
 
   return ret;
@@ -317,52 +321,54 @@ void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex,
   Mat trainData, valData;
   Mat trainRes, valRes;
 
-  vector<double> avgScore(33, 0);
+  vector<double> avgScore(2001, 0);
 
   //10-fold cross validation  
   int blocks_no = (int) posTex[0].size() + (int) posHog[0].size();
+  int i = 2000;
   for(int k = 0; k < 10; ++k) {
     splitSample(trainData, trainRes, valData, valRes, blocks_no, k, posTex, negTex, 
         posHog, negHog);
-    for(int i = 2; i <= 2; ++i) {
-      Matrix<float>* mTrain = ConvertMatMatrix(trainData);
-      Vector<float>* mVal= ConvertMatVector(valData);
-      model.CreatePLSModel(mTrain, mVal, i);
+    Matrix<float>* mTrain = ConvertMatMatrix(trainData);
+    Vector<float>* mVal= ConvertMatVector(valData);
+    model.CreatePLSModel(mTrain, mVal, i);
 
-      Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
-      Matrix<float>* mValid = ConvertMatMatrix(valData);
-      Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
+    Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
+    Matrix<float>* mValid = ConvertMatMatrix(valData);
+    Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
+    model.ClearPLS();
 
-      Mat* newTrainData = ConvertMatrixMat(plsmTrain);
-      puts("training...");
-      svm.train(*newTrainData, trainRes, Mat(), Mat(), svmparams);
+    Mat* newTrainData = ConvertMatrixMat(plsmTrain);
+    puts("training...");
+    svm.train(*newTrainData, trainRes, Mat(), Mat(), svmparams);
 
-      puts("eval...");
-      Mat* newValData = ConvertMatrixMat(plsmValid);
-      cv::Mat valH = Mat(newValData->rows, 1, CV_32F);
-      for(int j = 0; j < newValData->rows; ++j) {		
-        valH.at<float>(j, 0) = svm.predict(newValData->row(j), true);
-      }
-      double err = errCnt(valH, valRes);
-      avgScore[i] += err;
-      printf("%lf\n", avgScore[i] / (k + 1));
-      delete mTrain;
-      delete mVal;
-      delete plsmTrain;
-      delete mValid;
-      delete plsmValid;
+    puts("eval...");
+    Mat* newValData = ConvertMatrixMat(plsmValid);
+    cv::Mat valH = Mat(newValData->rows, 1, CV_32F);
+    for(int j = 0; j < newValData->rows; ++j) {		
+      valH.at<float>(j, 0) = svm.predict(newValData->row(j), true);
     }
+    double err = errCnt(valH, valRes);
+    avgScore[i] += err;
+    printf("%lf\n", avgScore[i] / (k + 1));
+    delete mTrain;
+    delete mVal;
+    delete plsmTrain;
+    delete plsmValid;
+    delete newValData;
+    delete newTrainData;
   }
 
   FILE* f = fopen("feat_scores", "w");
 
-  for(int i = 3; i <= 2; ++i) {
-    printf("feats: %d score: %lf\n", i, avgScore[i] / 10);
-    fprintf(f, "feats: %d score: %lf\n", i, avgScore[i] / 10);
-  }
+  printf("feats: %d score: %lf\n", i, avgScore[i] / 10);
+  fprintf(f, "feats: %d score: %lf\n", i, avgScore[i] / 10);
+  fclose(f);
 
+  /*
   n_factors_best = min_element(avgScore.begin(), avgScore.end()) - avgScore.begin();
   printf("best: %d\n", n_factors_best);
   fprintf(f, "best: %d\n", n_factors_best);
   //TODO ne znam dobiti samo one blokove koji se koriste  za pls!
+  */
 }

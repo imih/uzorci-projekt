@@ -65,11 +65,6 @@ protected:
 	// set matrices for PLS
 	void SetMatrices(Matrix<float> *W, Matrix<float> *Wstar, Matrix<float> *P, Vector<float> *Xmean, Vector<float> *Xstd, Vector<float> *b);
 
-
-	// clear variables of this class
-	void ClearPLS();
-
-
 	// friend classes
 	//friend class Storage;
 	friend class Structures;
@@ -84,6 +79,8 @@ protected:
 	Vector<float> *GetBstar(int nfactors);
 
 public:
+	// clear variables of this class
+	void ClearPLS();
 	Matrix<float> *GetWMatrix() { return W; }
 	Vector<float> *GetbVector() { return b; }
 	PLS();

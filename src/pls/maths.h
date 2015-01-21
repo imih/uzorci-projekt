@@ -35,19 +35,17 @@ William R. Schwartz williamrobschwartz [at] gmail.com
 //////////////////
 template <class T>
 class Vector {
-  T *realp; // real pointer before align
   T *v;     // data poiter
 
   // allocate memory for the vector
   void AllocateMemory(int n) {
     CV_FUNCNAME("Vector::AllocateMemory");
 
-    realp = new T[n];
-    if (realp == NULL)
+    v = (T *) malloc(sizeof(T) * n);
+    if (v == NULL)
       DET_ERROR("No available memory to allocate vector");
 
-    memset(realp, 0, sizeof(T) * n);
-    v = realp;
+    memset(v, 0, sizeof(T) * n);
     this->n = n;
     // if change here, check setData function
   }
@@ -74,7 +72,6 @@ class Vector {
   Vector(int n) { AllocateMemory(n); }
 
   Vector() {
-    realp = NULL;
     v = NULL;
     n = 0;
   }
@@ -86,8 +83,9 @@ class Vector {
 
   // release structures
   ~Vector() {
-    //        if(realp != NULL)
-    //           delete realp;
+    if(v != NULL)
+      free(v);
+    v = NULL;
   }
 
   // return number of bytes used for this vector
@@ -160,10 +158,8 @@ class Vector {
 
   // copy this vector to a new one
   Vector *Copy() { 
-    puts("tu");
     Vector<T> *v1; 
     T *data;
-    printf("----------> %d\n", n);
     v1 = new Vector<T>(n);
     data = v1->GetData();
     memcpy(data, this->GetData(), sizeof(T) * n);
@@ -196,13 +192,12 @@ class Matrix { // matrix is column based
 
     CV_FUNCNAME("Matrix::AllocateMemory");
 
-    realp = new T[r * c];
 
     if (realp == NULL)
       DET_ERROR("No available memory to allocate matrix");
 
 
-    //	realp = (T *) malloc(sizeof(T) * r * c);
+    realp = (T *) malloc(sizeof(T) * r * c);
     memset(realp, 0, sizeof(T) * (r * c));
     m = realp;	
     this->r = r;
@@ -236,12 +231,17 @@ class Matrix { // matrix is column based
 
   // clear structures
   ~Matrix() { 
+    if(this->realp != NULL)
+      free(realp);
     this->realp = NULL;
     this->m = NULL;
     this->r = -1;
     this->c = -1;
   }
 
+  Matrix() {
+    this->realp = NULL;
+  }
 
   // Initialize
   Matrix(int r, int c) { AllocateMemory(r, c); }

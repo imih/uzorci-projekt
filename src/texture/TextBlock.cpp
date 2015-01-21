@@ -137,11 +137,17 @@ namespace texture {
       f_[11] = (f_[8] - hxy1) / max(hx, hy);
     f_[12] = sqrt(1 - exp(-2 * hxy2 - f_[8]));
 
-    if(f.n == 0)
-      f = Vector<float>(3 * (int) f_.size());
-    for(int i = 0; i < (int) f_.size(); ++i)
-      f.SetElement(idx + i, f_[i]);
-    idx += (int) f_.size();
+    fill(&f, f_);
   }
+
+  void TextBlock::fill(Vector<float>* out, vector<float>& in) {
+    if(out -> n == 0)
+      out = new Vector<float>(3 * (int) in.size());
+    for(int i = 0; i < (int) in.size(); ++i)
+      out->SetElement(idx + i, in[i]);
+    idx += (int) in.size();
+  }
+
+
 }
 
