@@ -26,8 +26,6 @@ namespace texture {
     int block_id;
 
     private:
-
-    void fill(Vector<float>*, vector<float>&);
     int idx;
     int coOccType;
   };

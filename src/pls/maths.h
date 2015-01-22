@@ -88,6 +88,22 @@ class Vector {
     v = NULL;
   }
 
+  Vector(const Vector& other) {
+    n = other.n;
+    v = (T *) malloc(sizeof(T) * n);
+    memcpy(v, other.v, n * sizeof(T));
+  }
+
+  Vector& operator= (const Vector& other) {
+    if(this != &other) {
+      n = other.n;
+      v = (T *) malloc(sizeof(T) * n);
+      if(n)
+        memcpy(v, other.v, n * sizeof(T));
+    }
+    return *this;
+  }
+
   // return number of bytes used for this vector
   int GetNumBytes() { return n * sizeof(T); }
 
@@ -192,12 +208,10 @@ class Matrix { // matrix is column based
 
     CV_FUNCNAME("Matrix::AllocateMemory");
 
-
+    realp = (T *) malloc(sizeof(T) * r * c);
     if (realp == NULL)
       DET_ERROR("No available memory to allocate matrix");
 
-
-    realp = (T *) malloc(sizeof(T) * r * c);
     memset(realp, 0, sizeof(T) * (r * c));
     m = realp;	
     this->r = r;

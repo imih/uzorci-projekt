@@ -82,7 +82,9 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
   } else 
     features = (posTex[0].size() * posTex[0][0].f.n + posHog[0].size() * posHog[0][0].f.n);
 
-  printf("%d\n", features);
+  assert(posTex[0][0].f.n > 0);
+  assert(posHog[0][0].f.n > 0);
+  printf("features: %d\n", features);
 
   trainRes = Mat(Ntr, 1, CV_32F);
   valRes = Mat(Nval, 1, CV_32F);
