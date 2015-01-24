@@ -2,6 +2,7 @@
 
 \usepackage[authoryear]{natbib}
 \usepackage{gensymb}
+\usepackage{mathtools}
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
 \author{Iva Miholić, Gustav Matula, Kristijan Franković, Tomislav Kiš}
 \makeindex
@@ -110,11 +111,145 @@ Novotreniranom klasifikatoru ćemo zatim testirati sposobnost generalizacije i p
 
 Slično kao kod treniranja promatramo klizni prozor i za njega računamo značajke, kojima zatim reduciramo dimenziju te ih dajemo kao ulazne podatke klasifikatoru. Ukoliko klasifikator procijeni da se radi o pješaku, dojavljujemo poziciju trenutnog kliznog prozora.
 
-\chapter{Postupak rješavanja zadatka} %TODO
+\chapter{Postupak rješavanja zadatka}
+\section{Učitavanje primjera za trening}
+Na početku treniranja klasifikatora, učitava se baza slika u boji INRIA  train\_64x128\_H96 sastavljena od $2416$ pozitivnih primjera slika veličine $64$x$128$ piksela te negativnih slika različitih dimenzija. Kako bi se postigla veličina $64$x$128$ piksela, sa svake je slike eliminiran postojeći crni okvir širine $16$ bita. Iz negativnih primjera učitanih slika slučajno se izabere $10000$ prozora veličine $64$x$128$ piksela koje ćemo koristiti kao negativne primjere u treningu. Zatim se iz slika ekstrahiraju značajke. Nakon ekstrakcije značajki, učitane slike oslobađaju se iz memorije. 
+
 \section{Ekstrakcija značajki}
+Za dani prozor, odnosno sliku veličine $64$x$128$ piksela, ekstrahiraju se značajke tako da najprije podijelimo prozor na preklapajuće blokove, ekstrahiramo značajke nad njima i konkateniramo ih u vektor značajki za ulazni prozor pritom pamteći koje su značajke došle iz kojeg bloka.
+
+\subsection{Značajke teksture}
+Iz svakog bloka veličine $16$, odnosno $32$ piksela dobivenih pomakom po prozoru za $8$ odnosno $16$ piksela, računaju se $4$ 
+ matrice susjedstva (\emph{co-occurance matrices}): matrice zadužene za horizontalne i vertikalne susjede te matrice zadužene za susjede na obje dijagonale. Svaka matrica uzima u obzir učestalost parova najbližih susjeda u pojedinom kanalu boja za svoj smjer čime ćemo zapravo dobivamo $12$ matrica susjedstva. Za značajke teksture koristimo $HSV$ (\emph{hue, saturation, value}) model boja. 
+ 
+$HSV$ model boja filtrira tri kanala: ton boje (\emph{hue}) određen stupnjem ($0\degree$ - $360\degree$), čistoću boje (\emph{saturation}) određenu vrijednošću od $0$ do $1$ koja određuje koliko je bijele dodano u boju te svjetlina boje(\emph{brightness}) također sa vrijednosti od $0$ do $1$ gdje $0$ označuje crnu boju. Sa tim se opisom $HSV$ čini kao najbolji model za temelj ekstrakcije značajki teksture. Prije računanja matrica susjedstva, vrijednosti sva 3 kanala diskretiziraju se na vrijednosti od $1$ do $N_g = 16$.
+
+Iz $12$ matrica susjedstva ekstrahira se $13$ Haralickovih značajki teksture, dakle sveukupno $156$ značajki po bloku. Neka je $P$ jedna od matrica susjedstva. Ona je dimenzija $N_g$x$N_g$. Vrijednost $P(i, j)$ daje frekvenciju pojavljivanja parova vrijednost $i$ i $j$ kao (prvih) susjeda u diskretiziranom kanalu boje. Formiramo novu matricu $p$ dimenzija $N_g$x$N_g$ sa aproksimacijama parova diskretiziranih vrijednosti:
+\begin{equation*}
+\begin{multlined}
+R = \sum_{i = 1}^{N_g}\sum_{j = 1}^{N_g} P(i, j) \\
+p(i, j) = \frac{P(i, j)}{R}
+\end{multlined}
+\end{equation*}
+
+Slijedi definicija $13$ Haralickovih značajki teksture. Vrijednosti funkcija $f_1, f_2, \dots, f_{13}$ koriste se kao značajke našeg modela.
+
+Suma kvadrata:
+\begin{equation*}
+f_1 = \sum_{i = 1}^{N_g}\sum_{j = 1}^{N_g} p(i, j) ^ 2
+\end{equation*}
+Varijanca:
+\begin{equation*}
+f_2 = \sum_{i = 1}^{N_g} \sum_{j = 1}^{N_g} (i - \mu) ^ 2 p(i, j)
+\end{equation*}
+gdje je $\mu$ srednja vrijednost $p(x, y)$.
+
+Inverzni diferencijski moment:
+\begin{equation}
+f_3 = \sum_{i = 1}^{N_g} \sum_{j = 1}^{N_g} \frac{1}{1 + (i - j) ^ 2} p(i, j)
+\end{equation}
+Entropija:
+\begin{equation*}
+f_4 = - \sum_{i = 1}^{N_g} \sum_{j = 1}^{N_g} p(i, j) \log(p(i, j))
+\end{equation*}
+Neka su
+\begin{equation*}
+p_x(i) = \sum_{j = 1}^{N_g} p(i, j)
+\end{equation*}
+\begin{equation*}
+p_y(j) = \sum_{i = 1}^{N_g} p(i, j).
+\end{equation*}
+te $\mu_x, \mu_y, \sigma_x, \sigma_y$ srednje vrijednosti i standardne devijacije pripadnih vjerojatnosti.
+
+Korelacija:
+\begin{equation*}
+f_6 = \frac{\sum_{i = 1}^{N_g} \sum_{j = 1}^{N_g} (i j) p(i, j) - \mu_x \mu_y}{\sigma_x \sigma_y}
+\end{equation*}
+
+Neka je 
+\begin{equation*}
+p_{x - y}(k) = \sum_{i = 1}^{N_g} \sum_{j = 1}^{N_g}p(i, j)   \mbox{ za } |i - j| = k, k \in \{0, 1, \dots, N_g - 1\}
+\end{equation*}
+Kontrast:
+\begin{equation*}
+f_7 = \sum_{k = 0}^{Ng - 1} k ^ 2  p_{x - y}(k)
+\end{equation*}
+Varijanca $p_{x - y}$:
+\begin{equation*}
+f_{8} = \mathrm{Var}(p_{x - y}) 
+\end{equation*}
+Entropija $p_{x - y}$:
+\begin{equation*}
+f_{9} = -\sum_{i = 0}^{N_g - 1} p_{x - y}(i) \log(p_{x - y}(i))
+\end{equation*}
+
+Neka je 
+\begin{equation*}
+p_{x + y}(k) = \sum_{i = 1}^{N_g} \sum_{j = 1}^{N_g}p(i, j) \mbox{ za } i + j = k, k \in \{2, 3, \dots, 2 N_g\}
+\end{equation*}
+Očekivanje $p_{x + y}$:
+\begin{equation*}
+f_{10} = \sum_{i = 2}^{2 N_g} i p_{x + y}(i)
+\end{equation*}
+Varijanca $p_{x + y}$:
+\begin{equation*}
+f_{11} = \sum_{i = 2}^{2 N_g} (i - f_{12})^2 p_{x + y}(i)
+\end{equation*}
+Entropija $p_{x + y}$:
+\begin{equation*}
+f_{12} = - \sum_{i = 2}^{2 N_g} p_{x + y}(i) \log(p_{x + y}(i))
+\end{equation*}
+
+Neka su definirane entropije 
+\begin{equation*}
+HXY1 = - \sum_{i = 1}^{N_g} \sum_{j = 1}^{N_g} p(i, j)	log(p_x(i) p_y(j))
+\end{equation*}
+\begin{equation*}
+HXY2 = - \sum_{i = 1}^{N_g} \sum_{j = 1}^{N_g} p_x(i) p_y(j) log(p_x(i)p_y(j))
+\end{equation*}
+te
+\begin{equation*}
+f_{12} = \frac{f_9 - HXY1}{\max(HX, HY)}
+\end{equation*}
+\begin{equation*}
+f_{13} = \sqrt{1 - \exp(-2(HXY2 - f_9))}
+	\end{equation*}
+mjere korelacije. 
+
+Za svaki blok u prozoru dobivamo tako $13 * 3 * 4 = 156$ značajki što je ukupno $24960$ značajki teksture u $160$ blokova jednog prozora.
+
+\subsection{Značajke HOG-a i histograma boja}
+Za ekstrakciju značajki HOG-a i boje koristimo podijelu na kvadartne blokove širine $12, 16, 20, 26, 32, 40, 48$ i $64$ piksela koji također 'klize' po prozoru za po pola duljine svoje širine. Za svaki kanal boje (u ovom slučaju to su kanali modela 'RGB') i svaki blok računaju se značajke koje se zatim konkateniraju u vektor značajki prozora pamteći pritom koja značajka pripada kojem bloku.
+
+Nagli prijelazi odnosno gradijenti bloka računaju se konvoluiranjem jednog kanala bloka sa jezgrenom kvadratnom matricom neparnih dimenzija. Jezgrena matrica klizi po bloku i za svaki piksel izračunava pripadajući prijelaz. Gradijenti se računaju koristeći prijelazne matrice za smjerove $0\degree$ i $90\degree$. Konvolucijske matrice za navedene smjerove su:
+
+$0$ stupnjeva:
+\begin{equation*}
+K_0 = 
+\begin{pmatrix}
+-1 & 0 & 1
+\end{pmatrix}
+\end{equation*}
+
+$90$ stupnjeva:
+\begin{equation}
+K_{90} = 
+\begin{pmatrix}
+-1 \\ 0 \\ 1
+\end{pmatrix}
+\end{equation}
+
+                  .                  
+Vrijednosti gradijenata se diskretiziraju u interval $[1, 12]$ te se za značajke uzima frekvencija svake diskretizirane vrijednosti ($12$ značajki po svakom kanalu boje u bloku). Dodatno, tijekom postupka se promatra u kojem je kanalu gradijent trenutačno najviši te se shodno tome ažurira histogram boja sa $3$ koša koji mjere frekvenciju odabira svaka od $3$ kanala boje kao onog sa najvišom vrijednošću gradijenta tijekom postupka.
+
+Za jedan blok tako imamo $39$ značajki, a za cijeli prozor, odnosno $558$ blokova, imamo $21762$ značajki. 
+
+\section{Treniranje}
+Ukupan broj ekstrahiranih značajki za jedan prozor, $46722$ značajki, prevelik je za direktno treniranje SVM klasifikatora te je prostoru značajki potrebno smanjiti dimenziju. No, i samo računanje velikog broja značajki i preslikavanje u prostor manje dimenzije pokazao se kao vremenski zahtjevan postupak (računanje svih značajki za jedan prozor u našoj implementaciji traje otprilike 0.1 sekundu) te ćemo iz tog razloga trenirati dva klasifikatora: prvi, jednostavniji model koji je osjetljiv na pogrešno pozitivno detektiranje negativnih primjera te drugi, složeniji model.
+Za vrijeme klasifikacije, prvi će model služiti kao filter za prozore koje želimo propustiti u drugi, složeniji i računalno zahtjevniji model. 
+
 \section{Treniranje prve faze klasifikatora}
 \section{Treniranje druge faze klasifikatora}
-
 
 \chapter{Ispitivanje rješenja}
 \section{Ispitna baza}
