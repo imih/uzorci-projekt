@@ -75,6 +75,9 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
   return ret;
 } 
 
+
+void train1();
+void train2();
 int main(int argc, char** argv) { //have posImNodes and negImNodes now
   puts("Getting features...pos...");
   vector<vector<TextBlock> > perBlockPosTex;
@@ -83,85 +86,73 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
   vector<vector<HOGBlock> > perBlockNegHog;
   clock_t begin = clock();
 
-  if(readFeatFromFile) {
-    readTex(perBlockPosTex, 1);
+  getTrainingSet();
+  for(int im = 0; im < min(debugFeaturesNo, (int) posImNodes.size()); ++im) {
+    Mat image = cv::imread(posImNodes[im].fileName, 1);
+    Mat curWin = Mat(image, Rect(16, 16, colWin, rowWin)); //BGR
+    assert(curWin.rows ==  rowWin);
+    assert(curWin.cols ==  colWin);
+    perBlockPosTex.push_back(getTextFeatures(curWin));
+    perBlockPosHog.push_back(getHOGFeatures(curWin)); 
     clock_t endPos = clock();
-    printf("1/4 t:%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
-    readHog(perBlockPosHog, 1);
-    endPos = clock();
-    printf("2/4 t:%0.3lfs\n", double(endPos - begin) / CLOCKS_PER_SEC);
-    puts("neg...");
-    readTex(perBlockNegTex, 0);
-    endPos = clock();
-    printf("3/4 t:%0.3lfs\n",
+    printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
         double(endPos - begin) / CLOCKS_PER_SEC);
-    readHog(perBlockNegHog, 0);
-    endPos = clock();
-    printf("4/4 t:%0.3lfs\n",
-        double(endPos - begin) / CLOCKS_PER_SEC);
-  } else {
-    getTrainingSet();
-    for(int im = 0; im < min(debugFeaturesNo, (int) posImNodes.size()); ++im) {
-      Mat image = cv::imread(posImNodes[im].fileName, 1);
-      Mat curWin = Mat(image, Rect(16, 16, colWin, rowWin)); //BGR
-      assert(curWin.rows ==  rowWin);
-      assert(curWin.cols ==  colWin);
-      perBlockPosTex.push_back(getTextFeatures(curWin));
-      perBlockPosHog.push_back(getHOGFeatures(curWin)); 
-      clock_t endPos = clock();
-      printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
-          double(endPos - begin) / CLOCKS_PER_SEC);
-    }
-
-    if(writeFeatToFile) {
-      writeTex(perBlockPosTex, 1);
-      writeHog(perBlockPosHog, 1);
-    }
-
-    puts("neg...");
-    int w = 0;
-    for(int im = 0; (im < (int) negImNodes.size()) && (w < negSampleSize); ++im) {
-      Mat image = cv::imread(negImNodes[im].fileName, 1); //BGR
-      for(int i = 16; (i + rowWin <= image.rows - 16) && (w < negSampleSize); i += rowWin) 
-        for(int j = 16; (j + colWin <= image.cols - 16) && (w < negSampleSize); j += colWin) {
-          w++;
-          Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
-
-          assert(curWin.rows ==  rowWin);
-          assert(curWin.cols ==  colWin);
-          perBlockNegTex.push_back(getTextFeatures(curWin));
-          perBlockNegHog.push_back(getHOGFeatures(curWin));
-          clock_t endPos = clock();
-          printf("%d/%d t:%0.3lfs\n", w, negSampleSize, 
-              double(endPos - begin) / CLOCKS_PER_SEC);
-        } 
-    }
-    if(writeFeatToFile) {
-      puts("writing to file...");
-      writeTex(perBlockNegTex, 0);
-      writeHog(perBlockNegHog, 0);
-    }
   }
 
+  puts("loading neg samples...");
+  int w = 0;
+  vector<cv::Mat> rest;
+  for(int im = 0; (im < (int) negImNodes.size()); ++im) {
+    Mat image = cv::imread(negImNodes[im].fileName, 1); //BGR
+    for(int i = 16; (i + rowWin <= image.rows - 16); i += 8) 
+      for(int j = 16; (j + colWin <= image.cols - 16); j += 8) {
+        w++;
+        Mat curWin = Mat(image, Rect(j, i, colWin, rowWin));
+        assert(curWin.rows ==  rowWin);
+        assert(curWin.cols ==  colWin);
+        rest.push_back(curWin);
+        clock_t endPos = clock();
+        printf("%d/oo t:%0.3lfs\n", w, negSampleSize, 
+            double(endPos - begin) / CLOCKS_PER_SEC);
+      } 
+  }
+
+  std::srand((unsigned) time(NULL));
+  random_shuffle(rest.begin(), rest.end());
+  rest.resize(10000); //potrebno? 
+  char faza = argv[argc - 1][0];
+  vector<vector<TextBlock> > negTexRest;
+  vector<vector<HOGBlock> > negHogRest;
+  for(int i = 0; i < (int) rest.size(); ++i) {
+    if(i < 5000) {
+      perBlockNegTex.push_back(getTextFeatures(rest[i]));
+      perBlockNegHog.push_back(getHOGFeatures(rest[i]));
+    } else if(i >= 5000 && faza == '2') {
+      negTexRest.push_back(getTextFeatures(rest[i]));
+      negHogRest.push_back(getHOGFeatures(rest[i]));
+    }
+  }
+  rest.clear();
   puts("...done loading  features");
   clock_t endPos = clock();
 
-  // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
-  //puts("Performing per block analysis...\n"); 
-  //plsPerBlock(perBlockPosTex, perBlockNegTex, perBlockPosHog, perBlockNegHog);
+  if(argv[argc - 1][0] == '2') {
+    puts("Performing full pls analysis...\n");
 
-  int n_factors_full;
-  set<int> texChosen2nd, hogChosen2nd;
-  puts("Performing full pls analysis...\n");
-  plsFull(n_factors_full, perBlockPosTex, perBlockNegTex, texChosen2nd, perBlockPosHog, 
-      perBlockNegHog, hogChosen2nd);
+    plsFull(perBlockPosTex, perBlockNegTex, perBlockPosHog, 
+        perBlockNegHog, negTexRest, negHogRest);
 
-  /*
-     CvSVM SVM;
-     SVM.train_auto(mpos + mneg,  ypos + yneg, Mat(), Mat(), params);
-     - write ALL parameters to file
-     - test the model
-   */
+    /*
+       CvSVM SVM;
+       SVM.train_auto(mpos + mneg,  ypos + yneg, Mat(), Mat(), params);
+       - write ALL parameters to file
+       */
+  } else if(argv[argc - 1][0] == '1') {
+    puts("Performing per block analysis...\n"); 
+    // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
+    plsPerBlock(perBlockPosTex, perBlockNegTex, perBlockPosHog, perBlockNegHog);
+    //TODO
+  }
 
   return 0;
 }

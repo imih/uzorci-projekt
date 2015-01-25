@@ -16,5 +16,6 @@ void plsPerBlock(vector<vector <TextBlock> >&, vector<vector <TextBlock> >&,
     vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&);
 
 // returns the what blocks to use for the second stage and how many features overall
-void plsFull(int, vector<vector <TextBlock> >&, vector<vector <TextBlock> >&, set<int>&,
-    vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&, set<int>&);
+void plsFull(vector<vector <TextBlock> >&, vector<vector <TextBlock> >&,
+    vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&, 
+    vector<vector <TextBlock> >&, vector<vector<HOGBlock> >&);

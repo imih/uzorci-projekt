@@ -21,14 +21,14 @@ namespace hog {
   const int ANGLE_BIN_CNT = 12;
   const double PI = 4.0 * atan(1);
 
-  enum {ANGLE_0, ANGLE_90};//, ANGLE_45, ANGLE_135};
+  enum {ANGLE_0, ANGLE_90, ANGLE_45, ANGLE_135};
   Mat kernels[ANGLE_CNT];
 
   void init_kernels() {
     kernels[0] = (cv::Mat_< short > (1, 3) << -1, 0, 1);
     kernels[1] = (cv::Mat_< short > (3, 1) << -1, 0, 1);
-    // kernels[2] = (Mat_< short > (3, 3) << -1, 0, 0, 0, 0, 0, 0, 0, 1) * 0.5;
-    // kernels[3] = (Mat_< short > (3, 3) << 0, 0, -1, 0, 0, 0, 1, 0, 0) * 0.5;
+    //    kernels[2] = (Mat_< short > (3, 3) << 0, 0, 1, 0, 0, 0, -1, 0, 0);
+    //    kernels[3] = (Mat_< short > (3, 3) << 1, 0, 0, 0, 0, 0, 0, 0, -1);
 
     //for (int i = 0; i < ANGLE_CNT; ++i)
     //  std::cout << kernels[i] << std::endl << std::endl;
@@ -136,7 +136,6 @@ namespace hog {
 
       for (int i = 0; i + block_sizes[bl][1] <= r; i += shift) {
         for (int j = 0; j + block_sizes[bl][0] <= c; j += shift) {
-          //TODO provjeri dal je block prazan!
           block_id++;
           if(chosen.size() && !chosen.count(block_id)) 
             continue;

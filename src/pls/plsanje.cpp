@@ -65,6 +65,60 @@ vector<float> getFeats(vector<TextBlock>& t, vector<HOGBlock>& h, int block,
 
 const int kBlkFactors = 16;
 
+
+void blocksToFeatures(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes,
+    vector<vector<TextBlock> >&posTex, vector<vector<TextBlock> >&negTex,
+    vector<vector<HOGBlock> >& posHog, vector<vector<HOGBlock> >& negHog,
+    vector<vector<TextBlock> >& restTex, vector<vector<HOGBlock> >& restHog,
+    vector<bool> taken) {
+  int features = (posTex[0].size() * posTex[0][0].f.n + posHog[0].size() * posHog[0][0].f.n);
+  assert(posTex[0][0].f.n > 0);
+  assert(posHog[0][0].f.n > 0);
+  printf("features: %d\n", features);
+  int notTaken = 0;
+  for(int i = 0; i < (int) taken.size(); ++i)
+    notTaken += (taken[i] == false);
+  int Ntr = posTex.size() + negTex.size() + (int) taken.size() - notTaken;
+  int Nval =  posTex.size() + notTaken;
+
+  trainData = Mat(Ntr, features, CV_32F);
+  trainRes = Mat(Ntr, 1, CV_32F);
+  valData = Mat(Nval, features, CV_32F);
+  valRes = Mat(Nval, 1, CV_32F);
+  int blocks = (int) posHog[0].size() + (int) posTex[0].size();
+
+  for(int i = 0; i < posTex.size(); ++i) {
+    trainRes.at<float>(i, 0) = 1;
+    valRes.at<float>(i, 0) = 1;
+    vector<float> allFeatures = getFeats(posTex[i], posHog[i], blocks, false);
+    for(int j = 0; j < (int) allFeatures.size(); ++j) {
+      trainData.at<float>(i, j) = allFeatures[j];
+      valData.at<float>(i, j) = allFeatures[j];
+    }
+  }
+
+  int shift1 = posTex.size(), shift2 = shift1;
+  for(int i = 0; i < negTex.size(); ++i) {
+    trainRes.at<float>(shift1 + i, 0) = -1;
+    vector<float> allFeatures = getFeats(negTex[i], negHog[i], blocks, false);
+    for(int j = 0; j < (int) allFeatures.size(); ++j) {
+      trainData.at<float>(shift1 + i, j) = allFeatures[j];
+    }
+  }
+  shift1 += negTex.size();
+  for(int i = 0; i < (int) taken.size(); ++i) {
+    if(taken[i])
+      trainRes.at<float>(shift1 + i, 0) = -1;
+    else valRes.at<float>(shift2 + i, 0) = -1;
+    vector<float> allFeatures = getFeats(restTex[i], restHog[i], blocks, false);
+    for(int j = 0; j < (int) allFeatures.size(); ++j) {
+      if(taken[i])
+      trainData.at<float>(shift1 + i, j) = allFeatures[j];
+      else valData.at<float>(shift2 + i, j) = allFeatures[j];
+    }
+  }
+}
+
 vector<int> sample_ids; 
 void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int block, 
     int k, vector<vector<TextBlock> >& posTex, vector<vector<TextBlock> >& negTex, 
@@ -300,59 +354,65 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   return;
 }
 
-void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex, 
-    vector<vector<TextBlock> >& negTex, set<int>& chosenT, vector<vector<HOGBlock> >& posHog, 
-    vector<vector<HOGBlock> >& negHog, set<int>& chosenH) {
-  //choose n_factors for 2nd (full) stage and the blocks you want to read them on
-
-  //randomize 
-  std::srand((unsigned) time(NULL));
-  for(int i = 0; i < (int) posTex.size(); ++i) {
-    sample_ids.push_back(i);
-  }
-
-  for(int i = 0; i < (int) negTex.size(); ++i) {
-    sample_ids.push_back(-i - 1);
-  }
-  random_shuffle(sample_ids.begin(), sample_ids.end());
-
-  CvSVMParams svmparams = getSVMParams();
-  CvSVM svm;
- 
-  Model model;
+void plsFull(vector<vector<TextBlock> >& posTex, 
+    vector<vector<TextBlock> >& negTex, vector<vector<HOGBlock> >& posHog, 
+    vector<vector<HOGBlock> >& negHog, vector<vector<TextBlock> >& restTex,
+    vector<vector<HOGBlock> >&restHog) {
   Mat trainData, valData;
   Mat trainRes, valRes;
 
-  vector<double> avgScore(2001, 0);
+  int kFactors = 25;
+  vector<bool> taken((int) restTex.size(), false);
+  int maxIt = 10;
+  for(int it = 0; it <= maxIt; ++it) {
 
-  //10-fold cross validation  
-  int blocks_no = (int) posTex[0].size() + (int) posHog[0].size();
-  int i = 2000;
-  for(int k = 0; k < 10; ++k) {
-    splitSample(trainData, trainRes, valData, valRes, blocks_no, k, posTex, negTex, 
-        posHog, negHog);
+    CvSVMParams svmparams = getSVMParams();
+    CvSVM svm;
+
+    Model model;
+
+    blocksToFeatures(trainData, trainRes, valData, valRes, posTex, negTex, 
+        posHog, negHog, restTex, restHog, taken);
+
     Matrix<float>* mTrain = ConvertMatMatrix(trainData);
     Vector<float>* mVal= ConvertMatVector(valData);
-    model.CreatePLSModel(mTrain, mVal, i);
+    model.CreatePLSModel(mTrain, mVal, kFactors);
 
     Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
     Matrix<float>* mValid = ConvertMatMatrix(valData);
     Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
+    if(it == maxIt) {
+      puts("saving pls model...");
+      model.SaveModel("./plsModel2");
+    } 
     model.ClearPLS();
 
     Mat* newTrainData = ConvertMatrixMat(plsmTrain);
     puts("training...");
-    svm.train(*newTrainData, trainRes, Mat(), Mat(), svmparams);
+    svm.train_auto(*newTrainData, trainRes, Mat(), Mat(), svmparams);
+    if(it == maxIt) {
+      puts("saving svm model...");
+      svm.save("./svmModel2.xml");
+    }
 
     puts("eval...");
     Mat* newValData = ConvertMatrixMat(plsmValid);
     cv::Mat valH = Mat(newValData->rows, 1, CV_32F);
-    for(int j = 0; j < newValData->rows; ++j) {		
+    for(int j = 0; j < valData.rows; ++j) {		
       valH.at<float>(j, 0) = svm.predict(newValData->row(j), true);
     }
     double err = errCnt(valH, valRes);
-    avgScore[i] += err;
-    printf("%lf\n", avgScore[i] / (k + 1));
+    printf("%lf\n", err);
+
+    int j = (int) taken.size() - 1;
+    for(int i = newValData -> rows - 1; i >= 0; --i) {
+      while(j >= 0 && taken[j]) j--;
+      if(j < 0) break;
+      if((int) newValData->at<float>(i, 0) != (int) valH.at<float>(i, 0))
+        taken[j--] = true;
+    }
+
+
     delete mTrain;
     delete mVal;
     delete plsmTrain;
@@ -361,16 +421,4 @@ void plsFull(int n_factors_best, vector<vector<TextBlock> >& posTex,
     delete newTrainData;
   }
 
-  FILE* f = fopen("feat_scores", "w");
-
-  printf("feats: %d score: %lf\n", i, avgScore[i] / 10);
-  fprintf(f, "feats: %d score: %lf\n", i, avgScore[i] / 10);
-  fclose(f);
-
-  /*
-  n_factors_best = min_element(avgScore.begin(), avgScore.end()) - avgScore.begin();
-  printf("best: %d\n", n_factors_best);
-  fprintf(f, "best: %d\n", n_factors_best);
-  //TODO ne znam dobiti samo one blokove koji se koriste  za pls!
-  */
 }
