@@ -46,9 +46,6 @@ Značajke temeljene na teksturi i boji obično se koriste kao nadopuna značajka
 metodu Dalal i Triggsa \cite{HOG}. Njihova se metoda pokazala dobrom na više baza podataka, ali promatranjem isključivo gradijenata potencijalno odbacujemo
 korisne izvore informacija, što vodi lažnoj pozitivnoj klasifikaciji. Primjerice tekstura nam dosta pomaže kod prepoznavanja odjeće, ali i pozadine, a boja kod prepoznavanja boje kože.
 
-\subsubsection{Histogram usmjerenih gradijenata ili HOG značajke}
-%TODO
-
 \subsubsection{Značajke temeljene na teksturi}
 Vjerojatno najpoznatija metoda ekstrakcije značajki koje opisuju teksturu potječe iz Haralickovog rada \cite{Haralick} još iz 1979. Za opis teksture koristi takozvanu \emph{co-occurrence} matricu, iz koje se zatim računaju same značajke, kao što su npr. korelacija, srednje vrijednosti i razne mjere entropije.
 
@@ -246,10 +243,67 @@ Za jedan blok tako imamo $39$ značajki, a za cijeli prozor, odnosno $558$ bloko
 
 \section{Treniranje}
 Ukupan broj ekstrahiranih značajki za jedan prozor, $46722$ značajki, prevelik je za direktno treniranje SVM klasifikatora te je prostoru značajki potrebno smanjiti dimenziju. No, i samo računanje velikog broja značajki i preslikavanje u prostor manje dimenzije pokazao se kao vremenski zahtjevan postupak (računanje svih značajki za jedan prozor u našoj implementaciji traje otprilike 0.1 sekundu) te ćemo iz tog razloga trenirati dva klasifikatora: prvi, jednostavniji model koji je osjetljiv na pogrešno pozitivno detektiranje negativnih primjera te drugi, složeniji model.
-Za vrijeme klasifikacije, prvi će model služiti kao filter za prozore koje želimo propustiti u drugi, složeniji i računalno zahtjevniji model. 
+Za vrijeme klasifikacije, prvi će model služiti kao filter za prozore koje želimo propustiti u drugi, složeniji i računalno zahtjevniji model. Najprije ćemo opisati postupak treniranja složenijeg klasifikatora jer treniranje svake od faza međusobno je nezavisno, a metoda treniranja složenijeg klasifikatora je jednostavnija.
+
+
+\section{Treniranje druge faze klasifikatora}
+Na ulazu imamo $2416$ vektora značajki pozitivno klasificirana prozora te $10000$ vektora značajki negativno klasificiranih prozora koje smo slučajno izabrali iz skupa negativnih primjera u bazi podataka. Skup negativno klasificiranih prozora slučajno podijelimo po pola. Početni skup za treniranje sastojat će se od $2416$ pozitivno klasificirana te $5000$ negativno klasificirana primjera.
+
+Treniramo SVM sljedećim iterativnim postupkom:
+\begin{itemize}
+\item $0.$ podesi parametar dimenzije reduciranog prostora značajki
+\item $1.$ nauči parametre metode PLS i smanji dimenziju prosora značajki
+\item $2.$ treniraj SVM uz podešavanje parametara u reduciranom dimenzijskom prostoru
+\item $3.$ klasificiraj skup za trening i dodatne negativne primjere dane na ulazu
+\item $4.$ negativne primjere koji su pogrešno klasificirani, a nisu u skupu za trening dodaj u skup za trening
+\item $5.$ vrati se na $1.$ do zadovoljavajućeg smanjenja progreške klasifikacije
+\end{itemize}
+
+Iz postupka saznajemo veličinu dimenzije reduciranog prostora značajki, parametre PLS-a koji će se spremiti u datoteku te parametre SVM-a koji će se također spremiti u datoteku.
+
+\subsection{\emph{Partial Least Squares} (PLS) kao metoda redukcije prostora značajki} 
+Kod metode parcijalnih najmanjih kvadrata (\emph{Partial Least Squares}, PLS) konstruiramo set prediktorskih (ili latentnih) značajki uzimajući u obzir klasifikaciju ulaznih primjera. 
+Detaljni opis postupka može se naći u \cite{PLS}, a ovdje slijedi kraće objašnjenje.
+
+Neka je $\mathcal{X} \subset \mathbf{R}^m$ prostor vektora značajki dimenzije $m$, a $\mathcal{Y} \subset \mathbf{R}$ prostor jednodimenzionalnih vektora - klasifikacija primjera. Za $n$ primjera, PLS postupkom nalazimo sljedeću dekompoziciju matrica $\mathbf{X} (n \times m) $ i $\mathbf{y} (n \times 1)$ čiji su retci iz $\mathcal{X}$ odnosno $\mathcal{Y}$:
+
+\begin{equation*}
+\mathbf{X} = \mathbf{T} \mathbf{P}^T + \mathbf{E} 
+\end{equation*}
+\begin{equation*}
+\mathbf{y} = \mathbf{U} \mathbf{q}^T + \mathbf{f} 
+\end{equation*}
+
+Matrice $\mathbf{T}$ i $\mathbf{U}$ su dimenzija $(n \times p)$ i sadrže vektore značajki nove dimenzije $p$. Matrica $\mathbf{P}$ dimenzije $(m \times p)$ i vektor $\mathbf{q}$ dimenzije $p$ označavaju koje su se značajke očuvale i kojim se poretkom nalaze u $\mathbf{T}$ odnosno $\mathbf{U}$, a matrica $\mathbf{E}$ i vektor $\mathbf{f}$ su rezidue.
+
+Primjernom algoritma NIPALS (\emph{non linear iterative partial least squares}) želimo konstruirati skup težinskih vektora $\mathbf{W} = \{\mathbf{w_1}, \mathbf{w_2}, \dots,
+\mathbf{w_p} \}$ takav da 
+\begin{equation*}
+[\mathrm{cov}(\mathbf{t_i}, \mathbf{u_i})]^ 2 = \max_{|w_i| = 1} [\mathrm{cov}(\mathbf{X}\mathbf{w_i} ,\mathbf{y})]^ 2
+\end{equation*}
+
+gdje je $\mathbf{t_i}$ $i$-ti stupac matrice $\mathbf{T}$, a $\mathbf{u_i}$ $i$-ti stupac matrice $\mathbf{U}$. $\mathrm{cov}(\mathbf{t_i}, \mathbf{u_i})$ je procjena kovarijance između ta dva vektora.Postupak se ponavlja dok se ne postigne željena dimenzija $p$. 
+
+Tako se dobiva ortogonalni skup vektora $\mathbf{w_i}$ maksimizirajući pritom kovarijancu između elemenata u $\mathbf{X}$ i $\mathbf{y}$. U usporedbi s PCA, PLS uzima u obzir varijance ulaznih značajki kao i predloženu klasifikaciju. Fischerova diskriminantna analiza, s druge strane, također uzima u obzir klasifikaciju, ali redukcija značajki dovodi do dimenzije $c - 1$ gdje je $c$ broj klasa. 
+
+Redukcija dimenzije na kraju se odvija projeciranjem vektora značajki dimenzija $m$ na skup težinskih vektora $\mathbf{W}$ rezultirajući novim vektorom značajki dimenzije $p$.
 
 \section{Treniranje prve faze klasifikatora}
-\section{Treniranje druge faze klasifikatora}
+Vremenski složenu ekstrakciju svih značajki za jedan prozor kao i redukciju istih na prostor manjih dimenzija, želimo optimizirati uvođenjem predfaze koja će birati prozore za ulaz u složeniji detektor. To ćemo učiniti odabirom podskupa blokova prozora najvišeg ratinga uz čije ćemo značajke trenirati jednostavniji klasifikator. Birajući manji skup blokova za klasifikaciju, ne trebamo  računati značajke za svaki blok prozora, već samo za one odabrane. Trening i validacija odvija se na skupu od $2416$ pozitivnih i $10000$ negativnih prozora.
+
+Značajnost značajke na  PLS projekciji (skraćeno VIP - \emph{Variable importance on projection} ) \cite{VIP} može se definirati za $j$-tu značajku kao
+\begin{equation*}
+VIP_j = \sqrt{m \sum_{k = 1}^{p} b_k^2 w_{jk} ^ 2 / \sum_{k = 1}^{p} b_k ^2}
+\end{equation*}
+
+gdje je $m$ ulazni broj značajki, $p$ broj značajki dobiven redukcijom $w_{jk}$ $j$-ti element $k$-tog težinskog vektora $\mathbf{w_k} \in \mathbf{W}$ te $b_k$  regresijska težina  $k$-te latentne varijable \cite{pls}, $b_k = \mathbf{u_k}^T \mathbf{t_k}$.
+
+Neka je blok definiran relativnom pozicijom u prozoru, svojom duljinom i širinom te vrsti značajki koje smo ekstrahirali iz njega. S obzirom da nam se prozori u skupu za treniranje međusobno ne preklapaju, možemo definirati klasu svakog bloka. Neka je klasa bloka ista klasi prozora u kojem se blok nalazi. Kako bi rangirali blokove po važnosti informacije koju unose u sustav, nad svakim blokom trenirat ćemo PLS i odabrati značajku predstavnicu tog bloka. To će biti prva značajka u reduciranom skupu značajki koja će također imati i najviši VIP score između svih značajki istoga bloka.
+
+Nakon odabira značajki predstavnica svakog bloka, konstruiramo novi vektor značajki za prozore koji se sastoji samo od značajki predstavnica svakog bloka. VIP rejting značajke predstavnice bloka $i$ određuje rejting tog bloka. Ostaje nam sortirati blokove silazno po rejtingu te odabrati broj blokova za klasifikator. 
+
+Koliko ćemo blokova uzeti za  klasifikaciju biramo $10$-koračnom unakrsnom validacijom.
+Na kraju također podesimo parametre SVM-a te zapišemo parametre PLS-a i SVM-a u datoteke.
 
 \chapter{Ispitivanje rješenja}
 \section{Ispitna baza}
@@ -285,6 +339,12 @@ Sama se baza sastoji od podskupa podataka za trening i podskupa za evaluaciju. U
 %TODO
 
 \section{Analiza rezultata}
+%TODO
+
+\chapter{Opis programske implementacije rješenja}
+%TODO
+
+\chapter{Zaključak}
 %TODO
 
 \bibliographystyle{plain}
