@@ -101,8 +101,7 @@ teksturu. U sljedećem koraku reduciramo dimenziju prostora značajki. Konačno,
 
 \subsubsection{Testiranje klasifikatora}
 
-Novotreniranom klasifikatoru ćemo zatim testirati sposobnost generalizacije i pretreniranost. 
-%TODO 
+Novotreniranom klasifikatoru ćemo zatim testirati sposobnost generalizacije i pretreniranost. Pregled i analiza testiranja dana je u zasebnom poglavlju.
 
 \subsubsection{Primjena klasifikatora}
 
@@ -252,7 +251,7 @@ Na ulazu imamo $2416$ vektora značajki pozitivno klasificirana prozora te $1000
 Treniramo SVM sljedećim iterativnim postupkom:
 \begin{itemize}
 \item $0.$ podesi parametar dimenzije reduciranog prostora značajki
-\item $1.$ nauči parametre metode PLS i smanji dimenziju prosora značajki
+\item $1.$ nauči ostale parametre metode PLS i smanji dimenziju prosora značajki
 \item $2.$ treniraj SVM uz podešavanje parametara u reduciranom dimenzijskom prostoru
 \item $3.$ klasificiraj skup za trening i dodatne negativne primjere dane na ulazu
 \item $4.$ negativne primjere koji su pogrešno klasificirani, a nisu u skupu za trening dodaj u skup za trening
@@ -288,6 +287,9 @@ Tako se dobiva ortogonalni skup vektora $\mathbf{w_i}$ maksimizirajući pritom k
 
 Redukcija dimenzije na kraju se odvija projeciranjem vektora značajki dimenzija $m$ na skup težinskih vektora $\mathbf{W}$ rezultirajući novim vektorom značajki dimenzije $p$.
 
+\subsection{Podešavanje parametara}
+Svi parametri posešavaju se u postupku $10$-koračne unakrsne validacije. U postupku najprije podijelimo skup za trening na $10$ jednakih dijelova. Postupak se ponavlja $10$ puta tako da uzmemo jednu $10$ primjera kao skup za validaciju, treniramo klasifikator na ostalim primjerima te na skupu za validaciju odredimo uspješnost klasifikacije za dani parametar. Onu vrijednost parametra za koji je pogreška generalizacije u prosjeku najmanja uzmemo za konačnu vrijednost. 
+
 \section{Treniranje prve faze klasifikatora}
 Vremenski složenu ekstrakciju svih značajki za jedan prozor kao i redukciju istih na prostor manjih dimenzija, želimo optimizirati uvođenjem predfaze koja će birati prozore za ulaz u složeniji detektor. To ćemo učiniti odabirom podskupa blokova prozora najvišeg ratinga uz čije ćemo značajke trenirati jednostavniji klasifikator. Birajući manji skup blokova za klasifikaciju, ne trebamo  računati značajke za svaki blok prozora, već samo za one odabrane. Trening i validacija odvija se na skupu od $2416$ pozitivnih i $10000$ negativnih prozora.
 
@@ -298,9 +300,9 @@ VIP_j = \sqrt{m \sum_{k = 1}^{p} b_k^2 w_{jk} ^ 2 / \sum_{k = 1}^{p} b_k ^2}
 
 gdje je $m$ ulazni broj značajki, $p$ broj značajki dobiven redukcijom $w_{jk}$ $j$-ti element $k$-tog težinskog vektora $\mathbf{w_k} \in \mathbf{W}$ te $b_k$  regresijska težina  $k$-te latentne varijable \cite{PLS}, $b_k = \mathbf{u_k}^T \mathbf{t_k}$.
 
-Neka je blok definiran relativnom pozicijom u prozoru, svojom duljinom i širinom te vrsti značajki koje smo ekstrahirali iz njega. S obzirom da nam se prozori u skupu za treniranje međusobno ne preklapaju, možemo definirati klasu svakog bloka. Neka je klasa bloka ista klasi prozora u kojem se blok nalazi. Kako bi rangirali blokove po važnosti informacije koju unose u sustav, nad svakim blokom trenirat ćemo PLS i odabrati značajku predstavnicu tog bloka. To će biti prva značajka u reduciranom skupu značajki koja će također imati i najviši VIP score između svih značajki istoga bloka.
+Neka je blok definiran relativnom pozicijom u prozoru, svojom duljinom i širinom te vrsti značajki koje smo ekstrahirali iz njega. S obzirom da nam se prozori u skupu za treniranje međusobno ne preklapaju, možemo definirati klasu svakog bloka. Neka je klasa bloka ista klasi prozora u kojem se blok nalazi. Kako bi rangirali blokove po važnosti informacije koju unose u sustav, nad svakim blokom trenirat ćemo PLS i odabrati značajku predstavnicu tog bloka. To će ona značajka koja ima  najviši VIP score između svih značajki istoga bloka.
 
-Nakon odabira značajki predstavnica svakog bloka, konstruiramo novi vektor značajki za prozore koji se sastoji samo od značajki predstavnica svakog bloka. VIP rejting značajke predstavnice bloka $i$ određuje rejting tog bloka. Ostaje nam sortirati blokove silazno po rejtingu te odabrati broj blokova za klasifikator. 
+Nakon odabira značajki predstavnica svakog bloka, konstruiramo novi vektor značajki za prozore koji se sastoji samo od značajki predstavnica svakog bloka. VIP rejting značajke predstavnice bloka određuje rejting tog bloka. Ostaje nam sortirati blokove silazno po rejtingu te odabrati broj blokova za klasifikator. 
 
 Koliko ćemo blokova uzeti za  klasifikaciju biramo $10$-koračnom unakrsnom validacijom.
 Na kraju također podesimo parametre SVM-a te zapišemo parametre PLS-a i SVM-a u datoteke. Svi se parametri podešavaju na temelju $0-1$ gubitka, $L = (fp + fn) / (p + n)$, na skupu za validaciju.
@@ -326,14 +328,8 @@ Baza slika INRIA sadrži slike iz nekoliko različitih izvora:
 \item slike sa servisa Google Images
 \end{itemize}.
 
-Sama se baza sastoji od podskupa podataka za trening i podskupa za evaluaciju. U podskupu za trening označena su $1208$ pješaka u $614$ od $1832$ fotografije. U podskupu za testiranje označeno je $566$ pješaka u $453$ od $741$ fotografije \cite{Dollar:2012:PDE:2197081.2197275}.  Primjeri fotografija sa i bez pješaka dani su na slici \ref{inria1}. Primjer anotacije za lijevu fotografiju sa slike \ref{inria1} dan je na slici \ref{inria2}.
 
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.3]{img/annot_139.png}
-\caption{Primjer anotacije pozitivno klasificiranih kliznih prozora za lijevu fotografiju na slici \ref{inria1}.}
-\label{inria2}
-\end{figure}
+Za treniranje koristimo podskup baze u 'train\_'%TODO
 
 \section{Rezultati učenja i ispitivanja}
 %TODO
