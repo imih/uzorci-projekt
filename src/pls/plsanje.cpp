@@ -16,8 +16,13 @@ using std::pair;
 
 const double eps = 10e-6; 
 CvSVMParams getSVMParams(){
-  return CvSVMParams(CvSVM::C_SVC, CvSVM::POLY, 2, 1, 0, 1, 0, 0, NULL, cvTermCriteria(
-        CV_TERMCRIT_EPS, 10000, 10e-6));
+  CvSVMParams params;
+  params.kernel_type = CvSVM::RBF;
+  params.svm_type = CvSVM::C_SVC;
+  params.gamma = 0.5;
+  params.C = 1;
+  params.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100, 10e-6);
+  return params;
 };
 
 double getVip(Model& model, int i) { 
@@ -513,7 +518,7 @@ void plsFull(vector<vector<TextBlock> >& posTex,
     random_shuffle(sample_ids.begin(), sample_ids.end());
 
     int blockNo = (int) posTex[0].size() + (int) posHog[0].size();
-    vector<double> fScores(35, 0.f);
+    vector<double> fScores(36, 0.f);
 
     for(int k = 0;  k < 5; ++k) {
       splitSample(trainData, trainRes, valData, valRes, blockNo, k, posTex, negTex, posHog,

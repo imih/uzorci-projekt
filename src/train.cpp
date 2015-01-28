@@ -24,8 +24,6 @@ using namespace cv;
 #define TRACE(x) std::cout << #x << " = " << x << std::endl
 
 const int debugFeaturesNo = 20000;
-const bool readFeatFromFile = false;
-const bool writeFeatToFile = false;
 const int maxlen = 2048;
 
 // window size is fixed: 64 x 128 
@@ -131,7 +129,8 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
     }
     if(i % 10 == 0) {
     clock_t endPos = clock();
-    printf("%d/negSampleSize t:%0.3lfs\n", i + 1, double(endPos - begin) / CLOCKS_PER_SEC);
+    printf("%d/%d t:%0.3lfs\n", i + 1, negSampleSize, 
+        double(endPos - begin) / CLOCKS_PER_SEC);
     }
   }
   rest.clear();
