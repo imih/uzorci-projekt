@@ -45,7 +45,7 @@ namespace texture {
   using namespace cv;
   using namespace std;
 
-  void getTextBlocks(Mat orgImage, vector<TextBlock>& texBlocks, set<int> chosenBlocks) {
+  void getTextBlocks(Mat& orgImage, vector<TextBlock>& texBlocks, set<int> chosenBlocks) {
     int block_id = -1;
     for(int bl_size = 16; bl_size <= 32; bl_size += 16) {
       for(int p = 0; p < 4; ++p) {

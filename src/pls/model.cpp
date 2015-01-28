@@ -70,70 +70,73 @@ Vector<float> *featV, *auxv;
 int i;
 
 	auxv = new Vector<float>(this->nfactors);
-	featV = new Vector<float>(this->nfactors);
+	featV = NULL;
 	ret = new Matrix<float>(featMat->GetNRows(), this->nfactors);
 
-	for (i = 0; i < featMat->GetNRows(); i++) {
-		featV = featMat->GetRow(i);
-		Projection(featV->GetData(), auxv->GetData(), nfactors);
-		ret->SetRow(auxv, i);
-	}
+        for (i = 0; i < featMat->GetNRows(); i++) {
+          if(featV) delete featV;
+          featV = featMat->GetRow(i);
+          Projection(featV->GetData(), auxv->GetData(), nfactors);
+          ret->SetRow(auxv, i);
+        }
 
-	delete featV;
-	delete auxv;
+        if(featV)
+          delete featV;
 
-	return ret;
+        delete auxv;
+
+        return ret;
 }
 
 
 
 void Model::CreatePLSModel(Matrix<float> *mPos, Matrix<float> *mNeg, int nfactors) {
-Matrix<float> *X;
-Vector<float> *Y;
+  Matrix<float> *X;
+  Vector<float> *Y;
 
-	this->nfactors = nfactors;
+  this->nfactors = nfactors;
 
-	CV_FUNCNAME("Model::CreatePLSModel"); 
-	// set number of features
-	nfeatures = mNeg->GetNCols();
+  CV_FUNCNAME("Model::CreatePLSModel"); 
+  // set number of features
+  nfeatures = mNeg->GetNCols();
 
-	// inialize variable of model
-	if (this->nfeatures < 0)
-		DET_ERROR("improper size of 'nfeatures' (<0)");
+  // inialize variable of model
+  if (this->nfeatures < 0)
+    DET_ERROR("improper size of 'nfeatures' (<0)");
 
-	X = mPos->ConcatenateMatricesRows(mNeg, mPos);
-	
-	Y = new Vector<float>(X->GetNRows());
-	Y->SetRangeElements(0, mNeg->GetNRows(), (float) -1);
-	Y->SetRangeElements(mNeg->GetNRows(), mPos->GetNRows(), (float) 1);
+  X = mPos->ConcatenateMatricesRows(mNeg, mPos);
 
-	this->runpls(X, Y, nfactors, NULL);
+  Y = new Vector<float>(X->GetNRows());
+  Y->SetRangeElements(0, mNeg->GetNRows(), (float) -1);
+  Y->SetRangeElements(mNeg->GetNRows(), mPos->GetNRows(), (float) 1);
 
-	// clear used data
-	delete X;
-	delete Y;
+  this->runpls(X, Y, nfactors, NULL);
+
+  // clear used data
+  delete X;
+  delete Y;
 }
 
 
 
 void Model::CreatePLSModel(Matrix<float> *X, Vector<float> *Y, int nfactors) {
-Matrix<float> *Xnew;
-Vector<float> *Ynew;
+  Matrix<float> *Xnew;
+  Vector<float> *Ynew;
 
-	// number of factors
-	this->nfactors = nfactors;
+  // number of factors
+  this->nfactors = nfactors;
 
-	// number of features
-	this->nfeatures = X->GetNCols();
+  // number of features
+  this->nfeatures = X->GetNCols();
 
-	// copy matrices
-	Xnew = X->Copy();
-	Ynew = Y->Copy();
+  // copy matrices
+  Xnew = X->Copy();
+  Ynew = Y->Copy();
 
-	// run PLS
-	this->runpls(Xnew, Ynew, nfactors, NULL);
+  // run PLS
+  this->runpls(Xnew, Ynew, nfactors, NULL);
 
-	// clear used data
-	delete Xnew;
-	delete Ynew;
+  // clear used data
+  delete Xnew;
+  delete Ynew;
 }

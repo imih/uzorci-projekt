@@ -752,9 +752,7 @@ void PLS::Projection(float *feat, float *retproj, int nfactors) {
 
 void PLS::ExecuteZScore(float *feat, float *zscoreResult) {
 
-
   mat.ZscoreSSE(feat, Xmean->GetData(), Xstd->GetData(), zscoreResult, Wstar->GetNRows());
-
 
 }
 
