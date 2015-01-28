@@ -3,6 +3,10 @@
 \usepackage[authoryear]{natbib}
 \usepackage{gensymb}
 \usepackage{mathtools}
+\usepackage{hyperref}
+\newcommand{\shellcmd}[1]{\\\indent\indent\texttt{\footnotesize\# #1}\\}
+
+
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
 \author{Iva Miholić, Gustav Matula, Kristijan Franković, Tomislav Kiš}
 \makeindex
@@ -74,7 +78,7 @@ U \cite{Schwartz} se za iskorištavanje informacije sadržane u boji koristi jed
 Dovođenje mnogo značajki u sustav, odnosno visoka dimenzionalnost vektora značajki, može predstavljati problem za klasične tehnike učenje poput SVM-a, posebice uz često mali skup primjera za učenje.
 
 Pretpostavimo (slično kao u \cite{Schwartz}) da je detekcijski prozor podijeljen na preklapajuće blokove u iz kojih se zatim ekstrahiraju opisane značajke. Vektori značajki za sve blokove istog prozora konkateniraju se u vektor značajki prozora. Velika dimenzija takvog prostora značajki koju dobivamo promatrajući, uz gradijente, teksturu i boju, predstavlja problem za klasične metode strojnog učenja. No, zbog podijele prozora detekcije u blokove, značajke se ekstrahiraju iz susjednih blokova, što neizbježno vodi do sličnih značajki u bliskim blokovima te samim time i do kolinearnosti. Tako ima smisla iskoristiti nekakvu tehniku redukcije dimenzije, kao što su
-PCA (\emph{Principal Component Analysis}) ili FDA (\emph{Fisher Discriminant Analysis}). \cite{Schwartz} koristi PLS (\emph{Partial Least Squares}), inače 
+PCA \engl{Principal Component Analysis} ili FDA \engl{Fisher Discriminant Analysis}. \cite{Schwartz} koristi PLS \emph{Partial Least Squares}), inače 
 regresijsku metodu, praktičnu i za redukciju dimenzije skupa značajki zbog njene brzine i primjenjivosti na ovaj specifičan model.
 
 Nakon redukcije dimenzije za treniranje klasifikatora možemo koristiti metode učenja kao što je SVM (\emph{Support Vector Machine}) koje bi na prostoru s 
@@ -101,8 +105,7 @@ teksturu. U sljedećem koraku reduciramo dimenziju prostora značajki. Konačno,
 
 \subsubsection{Testiranje klasifikatora}
 
-Novotreniranom klasifikatoru ćemo zatim testirati sposobnost generalizacije i pretreniranost. 
-%TODO 
+Novotreniranom klasifikatoru ćemo zatim testirati sposobnost generalizacije i pretreniranost. Pregled i analiza testiranja dana je u zasebnom poglavlju.
 
 \subsubsection{Primjena klasifikatora}
 
@@ -117,9 +120,9 @@ Za dani prozor, odnosno sliku veličine $64$x$128$ piksela, ekstrahiraju se zna�
 
 \subsection{Značajke teksture}
 Iz svakog bloka veličine $16$, odnosno $32$ piksela dobivenih pomakom po prozoru za $8$ odnosno $16$ piksela, računaju se $4$ 
- matrice susjedstva (\emph{co-occurance matrices}): matrice zadužene za horizontalne i vertikalne susjede te matrice zadužene za susjede na obje dijagonale. Svaka matrica uzima u obzir učestalost parova najbližih susjeda u pojedinom kanalu boja za svoj smjer čime ćemo zapravo dobivamo $12$ matrica susjedstva. Za značajke teksture koristimo $HSV$ (\emph{hue, saturation, value}) model boja. 
+ matrice susjedstva \engl{co-occurance matrices}: matrice zadužene za horizontalne i vertikalne susjede te matrice zadužene za susjede na obje dijagonale. Svaka matrica uzima u obzir učestalost parova najbližih susjeda u pojedinom kanalu boja za svoj smjer čime ćemo zapravo dobivamo $12$ matrica susjedstva. Za značajke teksture koristimo $HSV$ \engl{hue, saturation, value} model boja. 
  
-$HSV$ model boja filtrira tri kanala: ton boje (\emph{hue}) određen stupnjem ($0\degree$ - $360\degree$), čistoću boje (\emph{saturation}) određenu vrijednošću od $0$ do $1$ koja određuje koliko je bijele dodano u boju te svjetlina boje(\emph{brightness}) također sa vrijednosti od $0$ do $1$ gdje $0$ označuje crnu boju. Sa tim se opisom $HSV$ čini kao najbolji model za temelj ekstrakcije značajki teksture. Prije računanja matrica susjedstva, vrijednosti sva 3 kanala diskretiziraju se na vrijednosti od $1$ do $N_g = 16$.
+$HSV$ model boja filtrira tri kanala: ton boje \engl{hue} određen stupnjem ($0\degree$ - $360\degree$), čistoću boje \engl{saturation} određenu vrijednošću od $0$ do $1$ koja određuje koliko je bijele dodano u boju te svjetlina boje\engl{brightness} također sa vrijednosti od $0$ do $1$ gdje $0$ označuje crnu boju. Sa tim se opisom $HSV$ čini kao najbolji model za temelj ekstrakcije značajki teksture. Prije računanja matrica susjedstva, vrijednosti sva 3 kanala diskretiziraju se na vrijednosti od $1$ do $N_g = 16$.
 
 Iz $12$ matrica susjedstva ekstrahira se $13$ Haralickovih značajki teksture, dakle sveukupno $156$ značajki po bloku. Neka je $P$ jedna od matrica susjedstva. Ona je dimenzija $N_g$x$N_g$. Vrijednost $P(i, j)$ daje frekvenciju pojavljivanja parova vrijednost $i$ i $j$ kao (prvih) susjeda u diskretiziranom kanalu boje. Formiramo novu matricu $p$ dimenzija $N_g$x$N_g$ sa aproksimacijama parova diskretiziranih vrijednosti:
 \begin{equation*}
@@ -252,7 +255,7 @@ Na ulazu imamo $2416$ vektora značajki pozitivno klasificirana prozora te $1000
 Treniramo SVM sljedećim iterativnim postupkom:
 \begin{itemize}
 \item $0.$ podesi parametar dimenzije reduciranog prostora značajki
-\item $1.$ nauči parametre metode PLS i smanji dimenziju prosora značajki
+\item $1.$ nauči ostale parametre metode PLS i smanji dimenziju prosora značajki
 \item $2.$ treniraj SVM uz podešavanje parametara u reduciranom dimenzijskom prostoru
 \item $3.$ klasificiraj skup za trening i dodatne negativne primjere dane na ulazu
 \item $4.$ negativne primjere koji su pogrešno klasificirani, a nisu u skupu za trening dodaj u skup za trening
@@ -276,7 +279,7 @@ Neka je $\mathcal{X} \subset \mathbf{R}^m$ prostor vektora značajki dimenzije $
 
 Matrice $\mathbf{T}$ i $\mathbf{U}$ su dimenzija $(n \times p)$ i sadrže vektore značajki nove dimenzije $p$. Matrica $\mathbf{P}$ dimenzije $(m \times p)$ i vektor $\mathbf{q}$ dimenzije $p$ označavaju koje su se značajke očuvale i kojim se poretkom nalaze u $\mathbf{T}$ odnosno $\mathbf{U}$, a matrica $\mathbf{E}$ i vektor $\mathbf{f}$ su rezidue.
 
-Primjernom algoritma NIPALS (\emph{non linear iterative partial least squares}) želimo konstruirati skup težinskih vektora $\mathbf{W} = \{\mathbf{w_1}, \mathbf{w_2}, \dots,
+Primjernom algoritma NIPALS \engl{non linear iterative partial least squares} želimo konstruirati skup težinskih vektora $\mathbf{W} = \{\mathbf{w_1}, \mathbf{w_2}, \dots,
 \mathbf{w_p} \}$ takav da 
 \begin{equation*}
 [\mathrm{cov}(\mathbf{t_i}, \mathbf{u_i})]^ 2 = \max_{|w_i| = 1} [\mathrm{cov}(\mathbf{X}\mathbf{w_i} ,\mathbf{y})]^ 2
@@ -288,6 +291,9 @@ Tako se dobiva ortogonalni skup vektora $\mathbf{w_i}$ maksimizirajući pritom k
 
 Redukcija dimenzije na kraju se odvija projeciranjem vektora značajki dimenzija $m$ na skup težinskih vektora $\mathbf{W}$ rezultirajući novim vektorom značajki dimenzije $p$.
 
+\subsection{Podešavanje parametara}
+Svi parametri posešavaju se u postupku $10$-koračne unakrsne validacije. U postupku najprije podijelimo skup za trening na $10$ jednakih dijelova. Postupak se ponavlja $10$ puta tako da uzmemo jednu $10$ primjera kao skup za validaciju, treniramo klasifikator na ostalim primjerima te na skupu za validaciju odredimo uspješnost klasifikacije za dani parametar. Onu vrijednost parametra za koji je pogreška generalizacije u prosjeku najmanja uzmemo za konačnu vrijednost. 
+
 \section{Treniranje prve faze klasifikatora}
 Vremenski složenu ekstrakciju svih značajki za jedan prozor kao i redukciju istih na prostor manjih dimenzija, želimo optimizirati uvođenjem predfaze koja će birati prozore za ulaz u složeniji detektor. To ćemo učiniti odabirom podskupa blokova prozora najvišeg ratinga uz čije ćemo značajke trenirati jednostavniji klasifikator. Birajući manji skup blokova za klasifikaciju, ne trebamo  računati značajke za svaki blok prozora, već samo za one odabrane. Trening i validacija odvija se na skupu od $2416$ pozitivnih i $10000$ negativnih prozora.
 
@@ -298,9 +304,9 @@ VIP_j = \sqrt{m \sum_{k = 1}^{p} b_k^2 w_{jk} ^ 2 / \sum_{k = 1}^{p} b_k ^2}
 
 gdje je $m$ ulazni broj značajki, $p$ broj značajki dobiven redukcijom $w_{jk}$ $j$-ti element $k$-tog težinskog vektora $\mathbf{w_k} \in \mathbf{W}$ te $b_k$  regresijska težina  $k$-te latentne varijable \cite{PLS}, $b_k = \mathbf{u_k}^T \mathbf{t_k}$.
 
-Neka je blok definiran relativnom pozicijom u prozoru, svojom duljinom i širinom te vrsti značajki koje smo ekstrahirali iz njega. S obzirom da nam se prozori u skupu za treniranje međusobno ne preklapaju, možemo definirati klasu svakog bloka. Neka je klasa bloka ista klasi prozora u kojem se blok nalazi. Kako bi rangirali blokove po važnosti informacije koju unose u sustav, nad svakim blokom trenirat ćemo PLS i odabrati značajku predstavnicu tog bloka. To će biti prva značajka u reduciranom skupu značajki koja će također imati i najviši VIP score između svih značajki istoga bloka.
+Neka je blok definiran relativnom pozicijom u prozoru, svojom duljinom i širinom te vrsti značajki koje smo ekstrahirali iz njega. S obzirom da nam se prozori u skupu za treniranje međusobno ne preklapaju, možemo definirati klasu svakog bloka. Neka je klasa bloka ista klasi prozora u kojem se blok nalazi. Kako bi rangirali blokove po važnosti informacije koju unose u sustav, nad svakim blokom trenirat ćemo PLS i odabrati značajku predstavnicu tog bloka. To će ona značajka koja ima  najviši VIP score između svih značajki istoga bloka.
 
-Nakon odabira značajki predstavnica svakog bloka, konstruiramo novi vektor značajki za prozore koji se sastoji samo od značajki predstavnica svakog bloka. VIP rejting značajke predstavnice bloka $i$ određuje rejting tog bloka. Ostaje nam sortirati blokove silazno po rejtingu te odabrati broj blokova za klasifikator. 
+Nakon odabira značajki predstavnica svakog bloka, konstruiramo novi vektor značajki za prozore koji se sastoji samo od značajki predstavnica svakog bloka. VIP rejting značajke predstavnice bloka određuje rejting tog bloka. Ostaje nam sortirati blokove silazno po rejtingu te odabrati broj blokova za klasifikator. 
 
 Koliko ćemo blokova uzeti za  klasifikaciju biramo $10$-koračnom unakrsnom validacijom.
 Na kraju također podesimo parametre SVM-a te zapišemo parametre PLS-a i SVM-a u datoteke. Svi se parametri podešavaju na temelju $0-1$ gubitka, $L = (fp + fn) / (p + n)$, na skupu za validaciju.
@@ -326,14 +332,11 @@ Baza slika INRIA sadrži slike iz nekoliko različitih izvora:
 \item slike sa servisa Google Images
 \end{itemize}.
 
-Sama se baza sastoji od podskupa podataka za trening i podskupa za evaluaciju. U podskupu za trening označena su $1208$ pješaka u $614$ od $1832$ fotografije. U podskupu za testiranje označeno je $566$ pješaka u $453$ od $741$ fotografije \cite{Dollar:2012:PDE:2197081.2197275}.  Primjeri fotografija sa i bez pješaka dani su na slici \ref{inria1}. Primjer anotacije za lijevu fotografiju sa slike \ref{inria1} dan je na slici \ref{inria2}.
 
-\begin{figure}[h!]
-\centering
-\includegraphics[scale=0.3]{img/annot_139.png}
-\caption{Primjer anotacije pozitivno klasificiranih kliznih prozora za lijevu fotografiju na slici \ref{inria1}.}
-\label{inria2}
-\end{figure}
+Za treniranje koristimo podskup baze 'train\_64x128\_H96' koji čini $2416$ pozitivno klasificiranih slika veličine $64 \times 128$ piksela kojima je dodan crni okvir od $16$ piksela te $1218$ negativnih slika različitih veličina iz koji slučajno odabiremo negativne okvire za trening. 
+
+Za testiranje koristim podskup baze 'test\_64x128\_H96' koji čini $1132$ pozitivno klasificirane slike također veličine $64 \times 128$ piksela s crnim okvirom od $16$ piksela te $453$ negativno kalsificirane slike različitih veličina. Crne okvire ćemo rijekom treninga i testiranja na pozitivno klasificiranim slikama zanemariti.
+
 
 \section{Rezultati učenja i ispitivanja}
 %TODO
@@ -342,7 +345,28 @@ Sama se baza sastoji od podskupa podataka za trening i podskupa za evaluaciju. U
 %TODO
 
 \chapter{Opis programske implementacije rješenja}
-%TODO
+Programska implementacija nalazi se u repozitoriju 'src'. Implementacija ekstrakcije značajki teksture nalazi se u repozitoriju 'src/texture', a ekstrakcija značajki boje i HOG-a nalaze se u 'src/hogcolor'. 
+
+Redukcijski postupak implementiran je u datotekama 'src/pls/pls.cpp' i 'src/pls/model.cpp'. Za samu implementaciju PLS postupka koristimo izmijenjenu verziju koda korištenu za \cite{Schwartz} dohvaćenu   \href{http://homepages.dcc.ufmg.br/~william/softwares.html#PLSNipals}{ovdje}.
+
+\section{Treniranje klasifikatora}
+
+Sami postupci treniranja prve i druge faze klasifikatora dani su u datoteci 'src/pls/plsanje.cpp'. Metoda 'plsPerBlock' predstavlja postupak treniranja prve faze, a metoda 'plsFull' predstavlja postupak treniranja druge faze. Sučelje za pokretanje teniranja implementiratno je u 'src/train.cpp'.	
+
+Želimo li trenirati prvu fazu klasifikatora, pokrećemo program train s parametrom '1': \shellcmd{./train 1}. 
+Izlaz programa biti će dvije datoteke: 'plsModel1' i 'svmModel1.xml' u kojima su spremljeni parametri modela za redukciju značajki metodom PLS te parametri SVM modela.
+
+Želimo li trenirati drugu fazu klasifikatora, pokrećemo program train s parametrom '2': \shellcmd{./train 2}. Izlaz programa biti će dvije datoteke: 'plsModel2' i 'svmModel2.xml' u kojima su premljeni parametri modela za redukciju značajki metodom PLS te parametri SVM modela. 
+
+\section{Program za evaluaciju istreniranog klasifikatora}
+
+Program za evaluaciju istreniranog klasifikatora implementiran je u 'src/test.cpp'. Program čita datoteke u kojima su zapisani klasifikatori za prvu i drugu fazu klasifikacije ('plsModel1', plsModel2', 'svmModel1.xml', svmModel2.xml') te provodi evaluaciju cijelokupnog procesa klasifikacije nad skupom testnim primjera iz INRIA baze podataka. Program će ispisati broj pogrešnih pozitivnih i negativnih klasifikacija, broj točnih pozitivnih i negativnih klasifikacija, omjer pogrešno negativnih klasifikacija među podskupom pozitivnih primjera \engl{miss rate} te omjer pogrešno pozitivnih klasifikacija među podskupom negativnih primjera \engl{false positives per window}. 
+
+Program također stvara datoteku 'fails' sa popisom putanja do slika koje su pogrešno klasificirane. 
+
+\section{Program za klasifikaciju pojedine slike}
+
+Program za klasifikaciju jedne slike nalazi se u datoteci 'src/classify.cpp'. Prvi argument komande linije programa jest putanja slike u kojoj se želi pronaći pješak / pješaci. Slika može biti proizvoljnog formata. Program skalira sliku više puta te  pomiče prozor veličine $64 \times 128$ piksela po slici. Svaki takav prozor pokuša se klasificirati kao pješak. Na kraju izvođenja program prikazuje sliku sa prikazanim okvirima koje je klasificirao kao pješake.
 
 \chapter{Zaključak}
 %TODO
