@@ -296,14 +296,14 @@ Značajnost značajke na  PLS projekciji (skraćeno VIP - \emph{Variable importa
 VIP_j = \sqrt{m \sum_{k = 1}^{p} b_k^2 w_{jk} ^ 2 / \sum_{k = 1}^{p} b_k ^2}
 \end{equation*}
 
-gdje je $m$ ulazni broj značajki, $p$ broj značajki dobiven redukcijom $w_{jk}$ $j$-ti element $k$-tog težinskog vektora $\mathbf{w_k} \in \mathbf{W}$ te $b_k$  regresijska težina  $k$-te latentne varijable \cite{pls}, $b_k = \mathbf{u_k}^T \mathbf{t_k}$.
+gdje je $m$ ulazni broj značajki, $p$ broj značajki dobiven redukcijom $w_{jk}$ $j$-ti element $k$-tog težinskog vektora $\mathbf{w_k} \in \mathbf{W}$ te $b_k$  regresijska težina  $k$-te latentne varijable \cite{PLS}, $b_k = \mathbf{u_k}^T \mathbf{t_k}$.
 
 Neka je blok definiran relativnom pozicijom u prozoru, svojom duljinom i širinom te vrsti značajki koje smo ekstrahirali iz njega. S obzirom da nam se prozori u skupu za treniranje međusobno ne preklapaju, možemo definirati klasu svakog bloka. Neka je klasa bloka ista klasi prozora u kojem se blok nalazi. Kako bi rangirali blokove po važnosti informacije koju unose u sustav, nad svakim blokom trenirat ćemo PLS i odabrati značajku predstavnicu tog bloka. To će biti prva značajka u reduciranom skupu značajki koja će također imati i najviši VIP score između svih značajki istoga bloka.
 
 Nakon odabira značajki predstavnica svakog bloka, konstruiramo novi vektor značajki za prozore koji se sastoji samo od značajki predstavnica svakog bloka. VIP rejting značajke predstavnice bloka $i$ određuje rejting tog bloka. Ostaje nam sortirati blokove silazno po rejtingu te odabrati broj blokova za klasifikator. 
 
 Koliko ćemo blokova uzeti za  klasifikaciju biramo $10$-koračnom unakrsnom validacijom.
-Na kraju također podesimo parametre SVM-a te zapišemo parametre PLS-a i SVM-a u datoteke.
+Na kraju također podesimo parametre SVM-a te zapišemo parametre PLS-a i SVM-a u datoteke. Svi se parametri podešavaju na temelju $0-1$ gubitka, $L = (fp + fn) / (p + n)$, na skupu za validaciju.
 
 \chapter{Ispitivanje rješenja}
 \section{Ispitna baza}
