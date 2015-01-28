@@ -29,9 +29,10 @@ const int maxlen = 2048;
 // window size is fixed: 64 x 128 
 const int colWin = 64;
 const int rowWin = 128;
-const int negSampleSize = min(debugFeaturesNo, 10000);
+const int negSampleSize = min(debugFeaturesNo, 5000);
 
-struct ImNode { string fileName; 
+struct ImNode { 
+  string fileName; 
   ImNode(string name) {
     fileName = name;
   }
@@ -47,8 +48,7 @@ void getTrainingSet() {
   }
   posList.close();
   printf("Read %d pos window samples\n", (int) posImNodes.size());
-
-  ifstream negList("../dataset/train_64x128_H96/neg.lst");
+ifstream negList("../dataset/train_64x128_H96/neg.lst");
   while(negList.getline(temp, maxlen)) {
     negImNodes.push_back(ImNode("../dataset/" + string(temp)));
   }
@@ -80,9 +80,12 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
   clock_t begin = clock();
 
   getTrainingSet();
+  Mat temp = Mat(cv::imread(posImNodes[0].fileName, 1), Rect(0, 0, colWin, rowWin));
   for(int im = 0; im < min(debugFeaturesNo, (int) posImNodes.size()); ++im) {
-    Mat image = cv::imread(posImNodes[im].fileName, 1);
-    Mat curWin = Mat(image, Rect(16, 16, colWin, rowWin)); //BGR
+    Mat curWin = cv::imread(posImNodes[im].fileName, 1);
+    if(curWin.rows != rowWin || curWin.cols != colWin) {
+      resize(curWin, curWin, temp.size(), 0, 0, INTER_CUBIC);
+    }
     assert(curWin.rows ==  rowWin);
     assert(curWin.cols ==  colWin);
     perBlockPosTex.push_back(getTextFeatures(curWin));
@@ -92,6 +95,7 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
       printf("%d/%d t:%0.3lfs\n", im + 1, (int) posImNodes.size(),
           double(endPos - begin) / CLOCKS_PER_SEC);
     }
+    curWin.release();
   }
   posImNodes.clear();
 
@@ -145,7 +149,6 @@ int main(int argc, char** argv) { //have posImNodes and negImNodes now
     puts("Performing m per block analysis...\n"); 
     // za svaki blok napravi pls i filtriraj koje blokove neces koristiti u stage 1 
     plsPerBlock(perBlockPosTex, perBlockNegTex, perBlockPosHog, perBlockNegHog);
-    //TODO
   }
 
   puts("done.");

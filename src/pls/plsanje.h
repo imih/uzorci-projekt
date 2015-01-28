@@ -6,6 +6,7 @@
 
 #include "../texture/TextBlock.h"
 #include "../hogcolor/HOGBlock.h"
+#include "model.h"
 
 using std::vector;
 using texture::TextBlock;
@@ -19,3 +20,5 @@ void plsPerBlock(vector<vector <TextBlock> >&, vector<vector <TextBlock> >&,
 void plsFull(vector<vector <TextBlock> >&, vector<vector <TextBlock> >&,
     vector<vector <HOGBlock> >&, vector<vector<HOGBlock> >&, 
     vector<vector <TextBlock> >&, vector<vector<HOGBlock> >&);
+
+vector<float> getFeats(vector<TextBlock>&, vector<HOGBlock>&, int, bool);

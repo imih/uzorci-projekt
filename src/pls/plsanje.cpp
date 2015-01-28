@@ -17,11 +17,12 @@ using std::pair;
 const double eps = 10e-6; 
 CvSVMParams getSVMParams(){
   CvSVMParams params;
-  params.kernel_type = CvSVM::RBF;
+  params.kernel_type = CvSVM::POLY;
   params.svm_type = CvSVM::C_SVC;
+  params.degree = 2;
   params.gamma = 0.5;
-  params.C = 1;
-  params.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100, 10e-6);
+  params.C = 62.5;
+  params.term_crit = cvTermCriteria(CV_TERMCRIT_EPS, 10000, 10e-6);
   return params;
 };
 
@@ -370,7 +371,7 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       printf("...%d %d\n", i, k);
       puts("splitting..");
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
-          posTex, negTex, posHog, negHog, true);
+          posTex, negTex, posHog, negHog, false);
       puts("training...");
       svm.train_auto(trainData, trainRes, Mat(), Mat(), svmparams, 10,
           CvSVM::get_default_grid(CvSVM::C), CvSVM::get_default_grid(CvSVM::GAMMA),
@@ -378,7 +379,7 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
           CvSVM::get_default_grid(CvSVM::COEF), CvSVM::get_default_grid(CvSVM::DEGREE), true);
       valH = Mat(valData.rows, 1, CV_32F);
       for(int j = 0; j < valData.rows; ++j) {		
-        valH.at<float>(j, 0) = svm.predict(valData.row(j), true);
+        valH.at<float>(j, 0) = svm.predict(valData.row(j), false);
       }
       puts("predicted.");
       double err = errCnt(valH, valRes);
@@ -438,14 +439,10 @@ void trainPS(Model& m, CvSVM& svm, Mat& trainData, Mat& trainRes, int factors,
     gridP.step = 0;
     auto gridNu = CvSVM::get_default_grid(CvSVM::NU);
     gridNu.step = 0;
-    auto gridDeg = CvSVM::get_default_grid(CvSVM::DEGREE);
-    gridDeg.step = 0;
-    gridDeg.min_val = 3;
-    gridDeg.max_val = 3;
     svm.train_auto(*newTrainData, trainRes, Mat(), Mat(), params, 10, 
         CvSVM::get_default_grid(CvSVM::C), CvSVM::get_default_grid(CvSVM::GAMMA),
         gridP, gridNu,
-        CvSVM::get_default_grid(CvSVM::COEF), gridDeg,
+        CvSVM::get_default_grid(CvSVM::COEF), CvSVM::get_default_grid(CvSVM::DEGREE),
         true);
     params = svm.get_params();
   } else {
@@ -483,7 +480,6 @@ double evaluate(Model& m, CvSVM& svm, Mat& data, Mat& res,
       }
     }
 
-    printf("fp: %d\n", fp);
   }
 
   delete mValid;
@@ -499,13 +495,13 @@ void plsFull(vector<vector<TextBlock> >& posTex,
     vector<vector<TextBlock> >& negTex, vector<vector<HOGBlock> >& posHog, 
     vector<vector<HOGBlock> >& negHog, vector<vector<TextBlock> >& restTex,
     vector<vector<HOGBlock> >&restHog) {
-  bool trainPLSdimension = true;
+  bool trainPLSdimension = false;
   Mat trainData, valData;
   Mat trainRes, valRes;
   CvSVMParams svmparams = getSVMParams();
   CvSVM svm;
   Model model;
-  int kFactors = 35;
+  int kFactors = 20;
 
   if(trainPLSdimension) {
     //randomize 
@@ -520,15 +516,19 @@ void plsFull(vector<vector<TextBlock> >& posTex,
     int blockNo = (int) posTex[0].size() + (int) posHog[0].size();
     vector<double> fScores(36, 0.f);
 
-    for(int k = 0;  k < 5; ++k) {
+    for(int k = 0;  k < 1; ++k) {
       splitSample(trainData, trainRes, valData, valRes, blockNo, k, posTex, negTex, posHog,
           negHog, false);
-      for(int i = 35; i >= 1; --i) {
+      for(int i = 5; i <= 1000; i += 5) {
         printf("k: %d i: %d\n", k, i);
         puts("training...");
         trainPS(model, svm, trainData, trainRes, i, svmparams, false);
         puts("eval...");
-        fScores[i] += evaluate(model, svm, valData, valRes);
+
+        printf("train error: ");
+        evaluate(model, svm, trainData, trainRes);
+        printf("gen error: ");
+        evaluate(model, svm, valData, valRes);
       }
       trainData.release();
       trainRes.release();
@@ -536,11 +536,13 @@ void plsFull(vector<vector<TextBlock> >& posTex,
       valRes.release();
     }
 
+    /*
     for(int i = 1; i <= 35; ++i) {
       if(fScores[i] < fScores[kFactors])
         kFactors = i;
       printf("%d: %lf\n", i, fScores[i] / 5);
     }
+    */
     printf("Choosing %d dimensions.\n", kFactors);
     exit(0);
   }
@@ -552,12 +554,15 @@ void plsFull(vector<vector<TextBlock> >& posTex,
     printf("it: %d\n", it);
     blocksToFeatures(trainData, trainRes, valData, valRes, posTex, negTex, 
         posHog, negHog, restTex, restHog, taken);
-    trainPS(model, svm, trainData, trainRes, kFactors, svmparams, false);
+    trainPS(model, svm, trainData, trainRes, kFactors, svmparams, it == 1  || it == 10);
     puts("saving pls model...");
     model.SaveModel("./plsModel2");
     puts("saving svm model...");
     svm.save("./svmModel2.xml");
-    puts("eval...");
+    printf("\ttrain error: ");
+    evaluate(model, svm, trainData, trainRes);
+    printf("\tgen error: ");
+    evaluate(model, svm, valData, valRes);
     evaluate(model, svm, valData, valRes, &taken);
 
     trainData.release();
