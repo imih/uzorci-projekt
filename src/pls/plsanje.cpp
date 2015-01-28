@@ -12,13 +12,15 @@ using hog::HOGBlock;
 using std::random_shuffle;
 using std::sort;
 using cv::Mat;
-using std::pair; const double eps = 10e-6; 
+using std::pair; 
+
+const double eps = 10e-6; 
 CvSVMParams getSVMParams(){
   return CvSVMParams(CvSVM::C_SVC, CvSVM::POLY, 2, 1, 0, 1, 0, 0, NULL, cvTermCriteria(
-        CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 1001, FLT_EPSILON));
+        CV_TERMCRIT_EPS, 10000, 10e-6));
 };
 
-double getVip(Model& model) { 
+double getVip(Model& model, int i) { 
   double ret1 = 0, ret2 = 0;
   Matrix<float>* W = model.GetWMatrix();
   Vector<float>* b = model.GetbVector();
@@ -26,7 +28,7 @@ double getVip(Model& model) {
 
   for(int k = 0; k < factors; ++k) {
     double bk = (double) (*b)[k];
-    double wkj = (double) W -> GetElement(k, 0);
+    double wkj = (double) W -> GetElement(k, i);
     ret1 += bk * bk * wkj * wkj;
     ret2 += bk * bk;
   }
@@ -82,11 +84,13 @@ void blocksToFeatures(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes,
   int Nval =  posTex.size() + notTaken;
 
   trainData = Mat(Ntr, features, CV_32F);
-  trainRes = Mat(Ntr, 1, CV_32F);
   valData = Mat(Nval, features, CV_32F);
+
+  trainRes = Mat(Ntr, 1, CV_32F);
   valRes = Mat(Nval, 1, CV_32F);
   int blocks = (int) posHog[0].size() + (int) posTex[0].size();
 
+  //jednak broj pozitivnih primjera
   for(int i = 0; i < posTex.size(); ++i) {
     trainRes.at<float>(i, 0) = 1;
     valRes.at<float>(i, 0) = 1;
@@ -97,25 +101,35 @@ void blocksToFeatures(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes,
     }
   }
 
-  int shift1 = posTex.size(), shift2 = shift1;
+  int shiftTrain = (int) posTex.size();
+  int shiftVal = (int) posTex.size();
   for(int i = 0; i < negTex.size(); ++i) {
-    trainRes.at<float>(shift1 + i, 0) = -1;
+    trainRes.at<float>(shiftTrain + i, 0) = -1;
     vector<float> allFeatures = getFeats(negTex[i], negHog[i], blocks, false);
     for(int j = 0; j < (int) allFeatures.size(); ++j) {
-      trainData.at<float>(shift1 + i, j) = allFeatures[j];
+      trainData.at<float>(shiftTrain + i, j) = allFeatures[j];
     }
   }
-  shift1 += negTex.size();
+  shiftTrain += (int) negTex.size();
+
+  int jTrain = 0, jVal = 0;
   for(int i = 0; i < (int) taken.size(); ++i) {
-    if(taken[i])
-      trainRes.at<float>(shift1 + i, 0) = -1;
-    else valRes.at<float>(shift2 + i, 0) = -1;
+    if(taken[i])  
+      trainRes.at<float>(shiftTrain + jTrain, 0) = -1;
+    else valRes.at<float>(shiftVal + jVal, 0) = -1;
     vector<float> allFeatures = getFeats(restTex[i], restHog[i], blocks, false);
     for(int j = 0; j < (int) allFeatures.size(); ++j) {
-      if(taken[i])
-      trainData.at<float>(shift1 + i, j) = allFeatures[j];
-      else valData.at<float>(shift2 + i, j) = allFeatures[j];
+      if(taken[i]) {
+        trainData.at<float>(shiftTrain + jTrain, j) = allFeatures[j];
+      } else {
+        assert(shiftVal + jVal <  Nval);
+        valData.at<float>(shiftVal + jVal, j) = allFeatures[j];
+      }
     }
+    if(taken[i])
+      jTrain++;
+    else 
+      jVal++;
   }
 }
 
@@ -148,10 +162,9 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
   int val_id = 0;
   int train_id = 0;
   for(int i = 0; i < N; ++i) {
-    int cur_id = sample_ids[i];
-    bool getToVal = ((i >= last) && (i < last + Nval));
-
-    vector<float> allFeatures;
+    int cur_id = sample_ids[i]; 
+    bool getToVal = ((i >= last) && (i < last + Nval)); 
+    vector<float> allFeatures; 
     if(cur_id >= 0) {
       if(!getToVal) {
         trainRes.at<float>(train_id, 0) = 1;
@@ -179,43 +192,53 @@ void splitSample(Mat& trainData, Mat& trainRes, Mat& valData, Mat& valRes, int b
       train_id++;
     else val_id++;
   }
-
-  last += Nval;
 }
 
 double errCnt(Mat& h, Mat& y) {
   int n = h.rows;
   double ret = 0;
+  int fp = 0, tn = 0, fn = 0, tp = 0;
   int falses = 0;
   for(int i = 0; i < n; ++i) {
-    if((int) y.at<float>(i, 0) != h.at<float>(i, 0))
-      falses++;
-    double delta =  1. - (double) y.at<float>(i, 0) * h.at<float>(i, 0);
-    if(delta >= 10e-6)
-      ret += delta;
+    int yk = (int) y.at<float>(i, 0);
+    int hk = (int) h.at<float>(i, 0);
+    fp += (hk == 1 && yk == -1);
+    tn += (hk == -1 && yk == -1);
+    fn += (hk == -1 && yk == 1);
+    tp += (hk == 1 && yk == 1);
   }
-  printf("%d\n", falses);
-  ret /= n;
+  printf("fp: %d tn: %d fn: %d tp: %d\n", fp, tn, fn, tp);
+  double fppw =  fp  * 1.0 / (tn + fp);
+  double miss_rate = fn * 1.0 / (fn + tp);
+  printf("fppw: %lf mr: %lf\n", fppw, miss_rate);
 
-  return ret;
-}
+
+  double loss01 = fp + fn;
+  printf("L01: %lf\n", loss01 / n);
+  return (double) loss01 / n;
+} 
 
 void plsPerBlock(vector<vector<TextBlock> >& posTex, 
     vector<vector<TextBlock> >& negTex, 
     vector<vector<HOGBlock> >& posHog, 
     vector<vector<HOGBlock> >& negHog) {
+
+  puts("getting representatory features for blocks...");
+  int blocks = (int) posTex[0].size() + (int) posHog[0].size();
+
+  int pnt = posTex.size();
+  int nnt = negTex.size();
+
+  Matrix<float> posData(pnt, blocks);
+  Matrix<float> negData(nnt, blocks);
+
   Model model;
   Matrix<float> *mPos, *mNeg;
 
-  //calc  rank for each block
-  puts("getting vip for texture blocks...");
-  int mt  = (int) posTex[0][0].f.n;
-  int pnt = (int) posTex.size();
-  int nnt = (int) negTex.size();
-
   int tblocks = (int) posTex[0].size();
   assert(tblocks == (int) negTex[0].size());
-  vector<double> tvip = vector<double>(tblocks, 0);
+
+  int mt = posTex[0][0].f.n;
   for(int i = 0; i < tblocks; ++i) {
     mPos = new Matrix<float>(pnt, mt);
     for(int j = 0; j < pnt; ++j) {
@@ -228,18 +251,36 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       mNeg->SetRow(&negTex[j][i].f, j);
     }
 
-    model.CreatePLSModel(mPos, mNeg, kBlkFactors);
-    tvip[i] = getVip(model);
+    model.CreatePLSModel(mPos, mNeg, mt);
+
+    int bestFeat = 0;
+    double bestVip = getVip(model, 0);
+    for(int k = 0; k < mt; ++k) {
+      double curVip = getVip(model, k);
+      if(bestVip < curVip + eps) {
+        bestFeat = k;
+        bestVip = curVip;
+      }
+    }
+
+    for(int j = 0; j < pnt; ++j)
+      posData.SetValue(j, i,  posTex[j][i].f.GetElement(bestFeat));
+    for(int j = 0; j < nnt; ++j)
+      negData.SetValue(j, i, negTex[j][i].f.GetElement(bestFeat));
+
+    delete mPos;
+    delete mNeg;
   }
 
-  puts("getting vip for hog blocks...");
+  int shift = tblocks;
+
   int mh = (int) posHog[0][0].f.n;
   int pnh = (int) posHog.size();
   int nnh = (int) negHog.size();
 
   int hblocks = (int) posHog[0].size();
   assert(hblocks == (int) negHog[0].size());
-  vector<double> hvip = vector<double>(hblocks, 0);
+
   for(int i = 0; i < hblocks; ++i) {
     mPos = new Matrix<float>(pnh, mh);
     for(int j = 0; j < pnh; ++j) {
@@ -251,11 +292,31 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       mNeg->SetRow(&negHog[j][i].f, j);
     }
 
-    model.CreatePLSModel(mPos, mNeg , kBlkFactors);
-    hvip[i] = getVip(model);
+    model.CreatePLSModel(mPos, mNeg, mh);
+    int bestFeat = 0;
+    double bestVip = getVip(model, 0);
+    for(int k = 0; k < mt; ++k) {
+      double curVip = getVip(model, k);
+      if(bestVip < curVip + eps) {
+        bestFeat = k;
+        bestVip = curVip;
+      }
+    }
+
+    for(int j = 0; j < pnh; ++j)
+      posData.SetValue(j, i + shift, posHog[j][i].f.GetElement(bestFeat));
+    for(int j = 0; j < nnh; ++j)
+      negData.SetValue(j, i + shift, negHog[j][i].f.GetElement(bestFeat));
+
+    delete mPos;
+    delete mNeg;
   }
 
-  //**************************************************************
+  model.CreatePLSModel(&posData, &negData,  kBlkFactors);
+  vector<double> vip(blocks, 0);
+  for(int i = 0; i < blocks; ++i)
+    vip[i] = getVip(model, i);
+
   //sort all blocks by vip score
   allBlocks.clear();
   for(int i = 0; i < (int) posTex[0].size(); ++i) 
@@ -266,8 +327,8 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
         const pair<char, int>& a, const pair<char, int>&b) {
       assert(a.first == 't' || a.first == 'h');
       assert(b.first == 't' || b.first == 'h');
-      double v1 = a.first == 't' ? tvip[a.second] : hvip[a.second];
-      double v2 = b.first == 't' ? tvip[b.second] : hvip[b.second];
+      double v1 = a.first == 't' ? vip[a.second] : vip[a.second + shift];
+      double v2 = b.first == 't' ? vip[b.second] : vip[b.second + shift];
       if(fabs(v1 - v2) <= eps) return false;
       return v1 + eps >= v2;
       });
@@ -290,9 +351,9 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   CvSVM svm;
 
   int posBlockSizes[33] = {1 , 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-    17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 40};	
+    17, 18, 19, 20, 21, 22, 23, 24, 35, 26, 27, 28, 29, 30, 31, 32, 40};	
   vector<double> avgScore(33, 0);
-  FILE* f = fopen("blocks_scores", "a");
+  FILE* f = fopen("blocks_scores", "r");
 
   Mat trainData, trainRes, valData, valRes, valH; 
   puts("performing 10-fold cross validation for stage 1");
@@ -306,7 +367,10 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
       splitSample(trainData, trainRes, valData, valRes, posBlockSizes[i], k,
           posTex, negTex, posHog, negHog, true);
       puts("training...");
-      svm.train(trainData, trainRes, Mat(), Mat(), svmparams);
+      svm.train_auto(trainData, trainRes, Mat(), Mat(), svmparams, 10,
+          CvSVM::get_default_grid(CvSVM::C), CvSVM::get_default_grid(CvSVM::GAMMA),
+          CvSVM::get_default_grid(CvSVM::P), CvSVM::get_default_grid(CvSVM::NU),
+          CvSVM::get_default_grid(CvSVM::COEF), CvSVM::get_default_grid(CvSVM::DEGREE), true);
       valH = Mat(valData.rows, 1, CV_32F);
       for(int j = 0; j < valData.rows; ++j) {		
         valH.at<float>(j, 0) = svm.predict(valData.row(j), true);
@@ -354,71 +418,147 @@ void plsPerBlock(vector<vector<TextBlock> >& posTex,
   return;
 }
 
+void trainPS(Model& m, CvSVM& svm, Mat& trainData, Mat& trainRes, int factors,
+    CvSVMParams& params, bool train_auto = false) {
+  Matrix<float>* mTrain = ConvertMatMatrix(trainData);
+  Vector<float>* mTrainRes= ConvertMatVector(trainRes);
+
+  m.CreatePLSModel(mTrain, mTrainRes, factors);
+
+  Matrix<float>* plsmTrain = m.ProjectFeatureMatrix(mTrain);
+  Mat* newTrainData = ConvertMatrixMat(plsmTrain);
+
+  if(train_auto) {
+    auto gridP = CvSVM::get_default_grid(CvSVM::P);
+    gridP.step = 0;
+    auto gridNu = CvSVM::get_default_grid(CvSVM::NU);
+    gridNu.step = 0;
+    auto gridDeg = CvSVM::get_default_grid(CvSVM::DEGREE);
+    gridDeg.step = 0;
+    gridDeg.min_val = 3;
+    gridDeg.max_val = 3;
+    svm.train_auto(*newTrainData, trainRes, Mat(), Mat(), params, 10, 
+        CvSVM::get_default_grid(CvSVM::C), CvSVM::get_default_grid(CvSVM::GAMMA),
+        gridP, gridNu,
+        CvSVM::get_default_grid(CvSVM::COEF), gridDeg,
+        true);
+    params = svm.get_params();
+  } else {
+    svm.train(*newTrainData, trainRes, Mat(), Mat(), params);
+  }
+
+  delete mTrain;
+  delete mTrainRes;
+  delete plsmTrain;
+  delete newTrainData;
+}
+
+
+double evaluate(Model& m, CvSVM& svm, Mat& data, Mat& res, 
+    vector<bool>* taken = NULL) {
+  Matrix<float>* mValid = ConvertMatMatrix(data);
+  Matrix<float>* plsmValid = m.ProjectFeatureMatrix(mValid);
+  Mat* newValData = ConvertMatrixMat(plsmValid);
+  cv::Mat valH = Mat(newValData->rows, 1, CV_32F);
+  for(int j = 0; j < newValData->rows; ++j) {		
+    valH.at<float>(j, 0) = svm.predict(newValData->row(j), false);
+  }
+  double err = errCnt(valH, res);
+
+  if(taken != NULL) {
+    int fp = 0;
+    int j = (int) taken->size() - 1;
+    for(int i = res.rows - 1; i >= 0; --i) {
+      while(j >= 0 && (*taken)[j]) j--;
+      if(j < 0) break;
+      if((int) res.at<float>(i, 0) != (int) valH.at<float>(i, 0)) {
+        (*taken)[j] = true;
+        j--;
+        fp++;
+      }
+    }
+
+    printf("fp: %d\n", fp);
+  }
+
+  delete mValid;
+  delete plsmValid;
+  delete newValData;
+  valH.release();
+  printf("%lf\n", err);
+  return err;
+}
+
+
 void plsFull(vector<vector<TextBlock> >& posTex, 
     vector<vector<TextBlock> >& negTex, vector<vector<HOGBlock> >& posHog, 
     vector<vector<HOGBlock> >& negHog, vector<vector<TextBlock> >& restTex,
     vector<vector<HOGBlock> >&restHog) {
+  bool trainPLSdimension = true;
   Mat trainData, valData;
   Mat trainRes, valRes;
+  CvSVMParams svmparams = getSVMParams();
+  CvSVM svm;
+  Model model;
+  int kFactors = 35;
 
-  int kFactors = 25;
-  vector<bool> taken((int) restTex.size(), false);
-  int maxIt = 10;
-  for(int it = 0; it <= maxIt; ++it) {
+  if(trainPLSdimension) {
+    //randomize 
+    std::srand((unsigned) time(NULL));
+    sample_ids.clear();
+    for(int i = 0; i < (int) posTex.size(); ++i) 
+      sample_ids.push_back(i);
+    for(int i = 0; i < (int) negTex.size(); ++i) 
+      sample_ids.push_back(-i - 1);
+    random_shuffle(sample_ids.begin(), sample_ids.end());
 
-    CvSVMParams svmparams = getSVMParams();
-    CvSVM svm;
+    int blockNo = (int) posTex[0].size() + (int) posHog[0].size();
+    vector<double> fScores(35, 0.f);
 
-    Model model;
-
-    blocksToFeatures(trainData, trainRes, valData, valRes, posTex, negTex, 
-        posHog, negHog, restTex, restHog, taken);
-
-    Matrix<float>* mTrain = ConvertMatMatrix(trainData);
-    Vector<float>* mVal= ConvertMatVector(valData);
-    model.CreatePLSModel(mTrain, mVal, kFactors);
-
-    Matrix<float>* plsmTrain = model.ProjectFeatureMatrix(mTrain);
-    Matrix<float>* mValid = ConvertMatMatrix(valData);
-    Matrix<float>* plsmValid = model.ProjectFeatureMatrix(mValid);
-    if(it == maxIt) {
-      puts("saving pls model...");
-      model.SaveModel("./plsModel2");
-    } 
-    model.ClearPLS();
-
-    Mat* newTrainData = ConvertMatrixMat(plsmTrain);
-    puts("training...");
-    svm.train_auto(*newTrainData, trainRes, Mat(), Mat(), svmparams);
-    if(it == maxIt) {
-      puts("saving svm model...");
-      svm.save("./svmModel2.xml");
+    for(int k = 0;  k < 5; ++k) {
+      splitSample(trainData, trainRes, valData, valRes, blockNo, k, posTex, negTex, posHog,
+          negHog, false);
+      for(int i = 35; i >= 1; --i) {
+        printf("k: %d i: %d\n", k, i);
+        puts("training...");
+        trainPS(model, svm, trainData, trainRes, i, svmparams, false);
+        puts("eval...");
+        fScores[i] += evaluate(model, svm, valData, valRes);
+      }
+      trainData.release();
+      trainRes.release();
+      valData.release();
+      valRes.release();
     }
 
-    puts("eval...");
-    Mat* newValData = ConvertMatrixMat(plsmValid);
-    cv::Mat valH = Mat(newValData->rows, 1, CV_32F);
-    for(int j = 0; j < valData.rows; ++j) {		
-      valH.at<float>(j, 0) = svm.predict(newValData->row(j), true);
+    for(int i = 1; i <= 35; ++i) {
+      if(fScores[i] < fScores[kFactors])
+        kFactors = i;
+      printf("%d: %lf\n", i, fScores[i] / 5);
     }
-    double err = errCnt(valH, valRes);
-    printf("%lf\n", err);
-
-    int j = (int) taken.size() - 1;
-    for(int i = newValData -> rows - 1; i >= 0; --i) {
-      while(j >= 0 && taken[j]) j--;
-      if(j < 0) break;
-      if((int) newValData->at<float>(i, 0) != (int) valH.at<float>(i, 0))
-        taken[j--] = true;
-    }
-
-
-    delete mTrain;
-    delete mVal;
-    delete plsmTrain;
-    delete plsmValid;
-    delete newValData;
-    delete newTrainData;
+    printf("Choosing %d dimensions.\n", kFactors);
+    exit(0);
   }
 
+  vector<bool> taken((int) restTex.size(), false);
+
+  int maxIt = 10;
+  for(int it = 1; it <= maxIt; ++it) {
+    printf("it: %d\n", it);
+    blocksToFeatures(trainData, trainRes, valData, valRes, posTex, negTex, 
+        posHog, negHog, restTex, restHog, taken);
+    trainPS(model, svm, trainData, trainRes, kFactors, svmparams, false);
+    puts("saving pls model...");
+    model.SaveModel("./plsModel2");
+    puts("saving svm model...");
+    svm.save("./svmModel2.xml");
+    puts("eval...");
+    evaluate(model, svm, valData, valRes, &taken);
+
+    trainData.release();
+    trainRes.release();
+    valData.release();
+    valRes.release();
+  }
 }
+
