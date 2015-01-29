@@ -339,10 +339,21 @@ Za testiranje koristim podskup baze 'test\_64x128\_H96' koji čini $1132$ poziti
 
 
 \section{Rezultati učenja i ispitivanja}
-%TODO
+
+Rezultate učenja i ispitivanja dajemo za direktnu primjenu druge faze klasifikatora. Za primjenu implementirane i trenirane prve faze klasifikatora potrebne su daljnje validacije koje nismo bili u mogućnosti izvesti. 
+
+Tijekom unakrsnog učenja i validacije, SVM sa radijalnim baznim jezgrama i $20$ značajki imao je najbolje svojstvo generalizacije. Dalje povećanje prostora značajki dovodilo je do pretreniranosti. Eksperimenti sa omjerom pozitivnog i negativnog broja klasificiranih prozora na trening uputili su nas na korištenje broja negativnih slika približno jednakim kao broj pozitivnih slika ($2418$ : $2500$) od početnog pretpostavljenog omjera ($2418$ : $10000$) jer klasifikator tada ima tendenciju klasificirati u negativnu klasu. 
+
+Testiranje provodimo nad $1332$ pozitivna i $2000$ negativnih primjera. Za najbolje trenirani klasifikator  
+%TODO rezultati testiranja!
+
+Za klasifikaciju jednog prozora treba u prosjeku $0.2$ sekunde. 
 
 \section{Analiza rezultata}
-%TODO
+
+U tijeku klasifikacije nepoznate slike u kojoj je potrebno kliziti prozor, u slučaju  pozitivne klasifikacije, više se prozora ($0$ do $16$ piksela najbliže udaljenosti) klasificiraju pozitivno. U tom slučaju pomoću funkcije groupRectangles "spajamo bliske prozore" kako bi slika rezultata bila preglednija.
+
+Za sliku nepoznate veličine kada je potrebno kliziti prozor po slici, proječno vrijeme evaluacije jednog prozora znatno usporava implementaciju što bi se riješilo dodavanjem prve faze klasifikatora. U tijeku klasifikacije slike nepoznate veličine klizimo prozor za $8$ piksela po slici, prethodno je skalirajući više puta.
 
 \chapter{Opis programske implementacije rješenja}
 Programska implementacija nalazi se u repozitoriju 'src'. Implementacija ekstrakcije značajki teksture nalazi se u repozitoriju 'src/texture', a ekstrakcija značajki boje i HOG-a nalaze se u 'src/hogcolor'. 
@@ -369,7 +380,13 @@ Program također stvara datoteku 'fails' sa popisom putanja do slika koje su pog
 Program za klasifikaciju jedne slike nalazi se u datoteci 'src/classify.cpp'. Prvi argument komande linije programa jest putanja slike u kojoj se želi pronaći pješak / pješaci. Slika može biti proizvoljnog formata. Program skalira sliku više puta te  pomiče prozor veličine $64 \times 128$ piksela po slici. Svaki takav prozor pokuša se klasificirati kao pješak. Na kraju izvođenja program prikazuje sliku sa prikazanim okvirima koje je klasificirao kao pješake.
 
 \chapter{Zaključak}
-%TODO
+
+Dodavanjem značajki teksture i boje u sustav značajki podupiren HOG-om svakako dovodi nove informacije u sustav i čini model sposobnijim za generalizaciju. No, velika dimenzionalnost  početnog prostora značajki dovodi do potrebe za redukcijom istog. Korištenjem metode kao što je PLS taj je postupak brz i uzima u obzir  pretpostavljene klase primjera.
+
+Trenirajući klasifikator, uočili smo pojavu znatno manje lažno negativnih klasifikacija s obzirom na problematiku klasificiranja samo HOG značajkama, no za veću preciznost, potrebno je posebno dobro podesiti parametre sustava.
+
+Budući planirani rad svakako predstavlja dodavanje prve faze klasifikatora u konačan produkt zbog brzine same klasifikacije te dodatna ubrzanja klasifikatora druge faze. Naime, s obzirom na matrice $\mathbf{P}$ i $\mathbf{q}$ iz PLS komponenti, moguće je vidjeti koje se inicijalne značajke ne koriste za kreiranje  značajki u reduciranom prostoru te takve značajke ne treba računati. Također, nakon potrebnih optimizacija, svakako je dobra ideja dodatno uvođenje novih značajki u sustav, s obzirom da, na primjeri, nismo koristili potpun sustav HOG značajki.
+
 
 \bibliographystyle{plain}
 \bibliography{bibliografija}
