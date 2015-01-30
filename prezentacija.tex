@@ -4,11 +4,12 @@
 \usepackage[T1]{fontenc}
 \usepackage[croatian]{babel}
 \usepackage{subfigure}
+\usepackage{mathtools}
 
 \setbeamertemplate{footline}[frame number]
 
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
-\author{Iva Miholić, Gustav Matula, Kristijan Franković, Tomislav Kiš}
+\author{Iva Miholić, Gustav Matula, Tomislav Kiš}
 \makeindex
 
 \begin{document}
@@ -59,14 +60,13 @@
 \section{Baza podataka za treniranje i verifikaciju rješenja }
 \begin{frame}
 \frametitle{Baza podataka za treniranje i verifikaciju rješenja \\ INRIA \cite{Dollar:2012:PDE:2197081.2197275}}
-
 \begin{figure}
 \includegraphics{img/person_139.png}
 \includegraphics[scale=0.3]{img/neg.png}
 \end{figure}
-\begin{figure}
-\includegraphics[scale=0.3]{img/annot_139.png}
-\end{figure}
+\begin{itemize}
+\item{fiksne dimenzije prozora $96 \times 128$}
+\end{itemize}
 \end{frame}
 
 \section{Pregled značajki temeljenih na teksturi i boji}
@@ -76,6 +76,10 @@
 \item nadopuna značajkama fokusiranim na bridove (HOG) \cite{HOG}
 \item detekcijski prozor podijeljen na preklapajuće blokove u iz kojih se ekstrahiraju značajke
 \end{itemize}
+\begin{figure}
+\includegraphics[scale=0.15]{img/matrix.png}
+\includegraphics[scale=0.1]{img/cube.png}
+\end{figure}
 \end{frame}
 
 \subsection{Značajke temeljene na teksturi}
@@ -118,6 +122,28 @@
 \end{itemize}
 \end{frame}
 
+\subsection{PLS - Partial Least Squares}
+\begin{frame}
+\frametitle{Metoda parcijalnih najmanjih kvadrata - PLS}
+\begin{itemize}
+\item{dekompozicija $\mathbf{X}$ i $\mathbf{y}$ u nove prostore $\mathbf{T}$ i $\mathbf{U}$ niže dimenzije uz maksimiziranje $cov(\mathbf{T}, \mathbf{U})$:
+\begin{equation*}
+\mathbf{X} = \mathbf{T} \mathbf{P}^T + \mathbf{E} 
+\end{equation*}
+\begin{equation*}
+\mathbf{y} = \mathbf{U} \mathbf{q}^T + \mathbf{f} 
+\end{equation*}
+}
+
+\item{Nađi težine $\mathbf{W} = \{\mathbf{w_1}, \mathbf{w_2}, \dots,
+\mathbf{w_p} \}$ takve da kovarijance "po stupcima / značajkama" odgovaraju:
+\begin{equation*}
+[\mathrm{cov}(\mathbf{t_i}, \mathbf{u_i})]^ 2 = \max_{|w_i| = 1} [\mathrm{cov}(\mathbf{X}\mathbf{w_i} ,\mathbf{y})]^ 2
+\end{equation*}}
+\end{itemize}
+
+\end{frame}
+
 \section{Plan arhitekture sustava računalnog vida}
 \begin{frame}
 \frametitle{Plan arhitekture sustava računalnog vida}
@@ -132,6 +158,23 @@
 \item Testiranje klasifikatora
 \item Primjena klasifikatora
 \end{enumerate}
+\end{frame}
+
+\section{Treniranje klasifikatora i rezultati} 
+\begin{frame}
+\frametitle{Treniranje klasifikatora}
+\begin{itemize}
+\item{validacija parametara: \\ vrste jezgre, dimenzije reduciranog prostora; parametara C, $\gamma$ i stupnja polinoma za SVM}
+\item{(unakrsna validacija)}
+\item{polinomijalna jezgra stupnja $4$\\ reducirani prostor dimenzija $20$}
+\item{pogrešno klasificirani negativni primjeri: $29.3\%$}
+\item{pogrešno klasificirani pozitivni primjeri: $9.95\%$}
+\end{itemize}
+\end{frame}
+
+\section{Komentari}
+\begin{frame}
+\frametitle{Komentari}
 \end{frame}
 
 \begin{frame}

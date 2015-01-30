@@ -8,7 +8,7 @@
 
 
 \title{Detekcija pješaka u urbanim okruženjima korišenjem značajki temeljenih na teksturi i boji}
-\author{Iva Miholić, Gustav Matula, Kristijan Franković, Tomislav Kiš}
+\author{Iva Miholić, Gustav Matula, Tomislav Kiš}
 \makeindex
 
 \begin{document}
@@ -344,8 +344,12 @@ Rezultate učenja i ispitivanja dajemo za direktnu primjenu druge faze klasifika
 
 Tijekom unakrsnog učenja i validacije, SVM sa radijalnim baznim jezgrama i $20$ značajki imao je najbolje svojstvo generalizacije. Dalje povećanje prostora značajki dovodilo je do pretreniranosti. Eksperimenti sa omjerom pozitivnog i negativnog broja klasificiranih prozora na trening uputili su nas na korištenje broja negativnih slika približno jednakim kao broj pozitivnih slika ($2418$ : $2500$) od početnog pretpostavljenog omjera ($2418$ : $10000$) jer klasifikator tada ima tendenciju klasificirati u negativnu klasu. 
 
-Testiranje provodimo nad $1332$ pozitivna i $2000$ negativnih primjera. Za najbolje trenirani klasifikator  
-%TODO rezultati testiranja!
+Testiranje provodimo nad $1332$ pozitivna i $2000$ negativnih primjera. Za najbolje trenirani klasifikator:
+\begin{itemize}
+\item{postotak pogrešno klasificiranih pozitivnih primjera:}
+\item{postotak pogrešno klasificiranih negativnih primjera:}
+\item{postotak pogrešno klasificiranih primjera:}
+\end{itemize}
 
 Za klasifikaciju jednog prozora treba u prosjeku $0.2$ sekunde. 
 
@@ -356,13 +360,16 @@ U tijeku klasifikacije nepoznate slike u kojoj je potrebno kliziti prozor, u slu
 Za sliku nepoznate veličine kada je potrebno kliziti prozor po slici, proječno vrijeme evaluacije jednog prozora znatno usporava implementaciju što bi se riješilo dodavanjem prve faze klasifikatora. U tijeku klasifikacije slike nepoznate veličine klizimo prozor za $8$ piksela po slici, prethodno je skalirajući više puta.
 
 \chapter{Opis programske implementacije rješenja}
+
+Cjelokupna implementacija rješenja može se pronaći \href{https://github.com/imih/uzorci-projekt}{ovdje}.
 Programska implementacija nalazi se u repozitoriju 'src'. Implementacija ekstrakcije značajki teksture nalazi se u repozitoriju 'src/texture', a ekstrakcija značajki boje i HOG-a nalaze se u 'src/hogcolor'. 
 
-Redukcijski postupak implementiran je u datotekama 'src/pls/pls.cpp' i 'src/pls/model.cpp'. Za samu implementaciju PLS postupka koristimo izmijenjenu verziju koda korištenu za \cite{Schwartz} dohvaćenu   \href{http://homepages.dcc.ufmg.br/~william/softwares.html#PLSNipals}{ovdje}.
+Redukcijski postupak implementiran je u datotekama 'src/pls/pls.cpp' i \\ 
+'src/pls/model.cpp'. Za samu implementaciju PLS postupka koristimo izmijenjenu verziju koda korištenu za \cite{Schwartz} dohvaćenu   \href{http://homepages.dcc.ufmg.br/~william/softwares.html#PLSNipals}{ovdje}.
 
 \section{Treniranje klasifikatora}
 
-Sami postupci treniranja prve i druge faze klasifikatora dani su u datoteci 'src/pls/plsanje.cpp'. Metoda 'plsPerBlock' predstavlja postupak treniranja prve faze, a metoda 'plsFull' predstavlja postupak treniranja druge faze. Sučelje za pokretanje teniranja implementiratno je u 'src/train.cpp'.	
+Sami postupci treniranja prve i druge faze klasifikatora dani su u datoteci \\ 'src/pls/plsanje.cpp'. Metoda 'plsPerBlock' predstavlja postupak treniranja prve faze, a metoda 'plsFull' predstavlja postupak treniranja druge faze. Sučelje za pokretanje teniranja implementiratno je u 'src/train.cpp'.	
 
 Želimo li trenirati prvu fazu klasifikatora, pokrećemo program train s parametrom '1': \shellcmd{./train 1}. 
 Izlaz programa biti će dvije datoteke: 'plsModel1' i 'svmModel1.xml' u kojima su spremljeni parametri modela za redukciju značajki metodom PLS te parametri SVM modela.

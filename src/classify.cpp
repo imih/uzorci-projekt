@@ -38,7 +38,7 @@ vector<HOGBlock> getHOGFeatures(Mat image) {
 } 
 
 int main(int argc, char** argv) { //have posImNodes and negImNodes now
-  vector<double> scales = {0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6};
+  vector<double> scales = {0.4, 0.6, 0.8, 1.0, 1.2, 1.4};
   const int colWin = 64;
   const int rowWin = 128;
 
